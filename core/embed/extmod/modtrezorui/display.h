@@ -139,4 +139,13 @@ void display_fade(int start, int end, int delay);
 void display_utf8_substr(const char *buf_start, size_t buf_len, int char_off,
                          int char_len, const char **out_start, int *out_len);
 
+typedef enum {
+  TRANSITION_FAST = 0,
+  TRANSITION_SLIDE_RIGHT = 1,
+  TRANSITION_SLIDE_LEFT = 2,
+} transition_type_t;
+
+void display_trans_start(void);
+void display_trans_exec(transition_type_t trans);
+
 #endif
