@@ -40,7 +40,9 @@
 
 #include "bootui.h"
 #include "messages.h"
-// #include "mpu.h"
+
+
+#include "rust_fn.h"
 
 const uint8_t BOOTLOADER_KEY_M = 2;
 const uint8_t BOOTLOADER_KEY_N = 3;
@@ -92,7 +94,7 @@ static void usb_init_all(secbool usb21_landing) {
   usb_start();
 }
 
-static secbool bootloader_usb_loop(const vendor_header *const vhdr,
+secbool bootloader_usb_loop(const vendor_header *const vhdr,
                                    const image_header *const hdr) {
   // if both are NULL, we don't have a firmware installed
   // let's show a webusb landing page in this case
@@ -196,7 +198,7 @@ secbool load_vendor_header_keys(const uint8_t *const data,
                             BOOTLOADER_KEYS, vhdr);
 }
 
-static secbool check_vendor_header_lock(const vendor_header *const vhdr) {
+secbool check_vendor_header_lock(const vendor_header *const vhdr) {
   uint8_t lock[FLASH_OTP_BLOCK_SIZE];
   ensure(flash_otp_read(FLASH_OTP_BLOCK_VENDOR_HEADER_LOCK, 0, lock,
                         FLASH_OTP_BLOCK_SIZE),
@@ -379,7 +381,7 @@ int main(void) {
       ui_screen_boot_click();
 #if defined TREZOR_MODEL_T
       touch_click();
-#elif defined TREZOR_MODEL_R
+#elif defined TREZOR_MODEL_1 || defined TREZOR_MODEL_R
       for (;;) {
         button_read();
         if (button_state_left() != 0 && button_state_right() != 0) {
