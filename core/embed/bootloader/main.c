@@ -282,7 +282,7 @@ int main(void) {
 
   vendor_header vhdr;
   image_header hdr;
-  secbool stay_in_bootloader = secfalse;  // flag to stay in bootloader
+  secbool stay_in_bootloader = sectrue;  // flag to stay in bootloader
 
   // detect whether the devices contains a valid firmware
 
