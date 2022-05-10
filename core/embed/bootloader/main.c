@@ -302,6 +302,11 @@ int main(void) {
                              FIRMWARE_SECTORS, FIRMWARE_SECTORS_COUNT);
   }
 
+//  ui_fadein();
+//  hello_world("bootloader");
+//  hal_delay(1000);
+
+
   // start the bootloader if no or broken firmware found ...
   if (firmware_present != sectrue) {
     // show intro animation

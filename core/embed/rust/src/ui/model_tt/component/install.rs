@@ -1,41 +1,105 @@
-use crate::ui::{
-    component::{Child, Component, Event, EventCtx},
-    geometry::{Grid, Rect},
-};
+use crate::ui::{component::{Child, Component, Event, EventCtx}, display, geometry::{Rect}};
+use crate::ui::display::Color;
+use crate::ui::geometry::Point;
+use crate::ui::model_tt::component::{ButtonStyle, ButtonStyleSheet};
+use crate::ui::model_tt::theme::{BG, FG, FONT_BOLD, GREEN, GREEN_DARK, GREY_LIGHT, RADIUS, RED, RED_DARK};
+use super::{theme, Button, ButtonMsg, Loader, LoaderMsg};
+use super::super::constant::{HEIGHT, WIDTH};
 
-
-pub enum InstallMsg<T, I, M, L, R>  {
-    Label(T),
-    Icon(I),
-    Message(M),
+pub enum InstallMsg<L, R>  {
     Left(L),
     Right(R),
 }
 
-pub struct Install<T, I, M, L, R> {
-    label: Child<T>,
-    icon: Child<I>,
+pub struct Install< M> {
+    label: &'static str,
+    icon: &'static [u8],
     message: Child<M>,
-    left: Child<L>,
-    right: Child<R>,
+    left: Child<Button<&'static str>>,
+    right: Child<Button<&'static str>>,
 }
 
 
-impl<T, I, M, L, R> Install<T, I, M, L, R>
+pub fn button_cancel() -> ButtonStyleSheet {
+    ButtonStyleSheet {
+        normal: &ButtonStyle {
+            font: FONT_BOLD,
+            text_color: FG,
+            button_color: RED,
+            background_color: FG,
+            border_color: FG,
+            border_radius: RADIUS,
+            border_width: 0,
+        },
+        active: &ButtonStyle {
+            font: FONT_BOLD,
+            text_color: FG,
+            button_color: RED_DARK,
+            background_color: FG,
+            border_color: BG,
+            border_radius: RADIUS,
+            border_width: 0,
+        },
+        disabled: &ButtonStyle {
+            font: FONT_BOLD,
+            text_color: GREY_LIGHT,
+            button_color: RED,
+            background_color: FG,
+            border_color: FG,
+            border_radius: RADIUS,
+            border_width: 0,
+        },
+    }
+}
+
+
+pub fn button_confirm() -> ButtonStyleSheet {
+    ButtonStyleSheet {
+        normal: &ButtonStyle {
+            font: FONT_BOLD,
+            text_color: FG,
+            button_color: GREEN,
+            background_color: FG,
+            border_color: FG,
+            border_radius: RADIUS,
+            border_width: 0,
+        },
+        active: &ButtonStyle {
+            font: FONT_BOLD,
+            text_color: FG,
+            button_color: GREEN_DARK,
+            background_color: FG,
+            border_color: FG,
+            border_radius: RADIUS,
+            border_width: 0,
+        },
+        disabled: &ButtonStyle {
+            font: FONT_BOLD,
+            text_color: FG,
+            button_color: GREEN,
+            background_color: FG,
+            border_color: FG,
+            border_radius: RADIUS,
+            border_width: 0,
+        },
+    }
+}
+
+
+
+impl<M> Install<M>
     where
-        T: Component,
-        I: Component,
         M: Component,
-        L: Component,
-        R: Component,
 {
-    pub fn new(label: T, icon: I, message: M, left: L, right: R) -> Self {
+    pub fn new(label: &'static str, icon: &'static [u8] , message: M) -> Self {
+
         Self {
-            label: Child::new(label),
-            icon: Child::new(icon),
+            label,
+            icon,
             message: Child::new(message),
-            left: Child::new(left),
-            right: Child::new(right),
+            left: Child::new(Button::with_icon(theme::ICON_CANCEL).styled(button_cancel())),
+            right: Child::new(Button::with_icon(theme::ICON_CONFIRM).styled(button_confirm())),
+
         }
     }
 
@@ -44,85 +108,49 @@ impl<T, I, M, L, R> Install<T, I, M, L, R>
     }
 }
 
-impl<T, I, M, L, R> Component for Install<T, I, M, L, R>
+
+
+impl<M> Component for Install<M>
     where
-        T: Component,
-        I: Component,
         M: Component,
-        L: Component,
-        R: Component,
 {
 
-    type Msg = InstallMsg<T::Msg, I::Msg, M::Msg, L::Msg, R::Msg>;
+    type Msg = InstallMsg<
+        <Button<&'static str> as Component>::Msg,
+        <Button<&'static str> as Component>::Msg>;
 
     fn place(&mut self, bounds: Rect) -> Rect {
-        let layout = InstallLayout::middle(bounds);
-        self.label.place(layout.label);
-        self.icon.place(layout.icon);
-        self.message.place(layout.message);
-        self.left.place(layout.left);
-        self.right.place(layout.right);
+        self.message.place(Rect::new (Point::new(55,52), Point::new(WIDTH-12, HEIGHT-80)));
+        self.left.place(Rect::new (Point::new(9,184), Point::new(117, 234)));
+        self.right.place(Rect::new (Point::new(123,184), Point::new(231, 234)));
         bounds
     }
 
     fn event(&mut self, ctx: &mut EventCtx, event: Event) -> Option<Self::Msg> {
-        self.message
-            .event(ctx, event)
-            .map(Self::Msg::Message)
-            .or_else(|| self.left.event(ctx, event).map(Self::Msg::Left))
+        self.left.event(ctx, event).map(Self::Msg::Left)
             .or_else(|| self.right.event(ctx, event).map(Self::Msg::Right))
     }
 
     fn paint(&mut self) {
-        self.label.paint();
-        self.icon.paint();
+        display::rect_fill(Rect::new (Point::new(0,0), Point::new(WIDTH, HEIGHT)), theme::FG);
+        display::rect_fill(Rect::new (Point::new(16,44), Point::new(WIDTH-12, 45)), theme::BG);
+        display::text(Point::new(16,32), self.label, theme::FONT_NORMAL, theme::BG, theme::FG);
+        display::icon(
+            Point::new(32,70),
+            self.icon,
+            Color::rgb(0x99, 0x99, 0x99),
+            FG,
+        );
+
+        // self.label.paint();
         self.message.paint();
         self.left.paint();
         self.right.paint();
+
     }
 
     fn bounds(&self, sink: &mut dyn FnMut(Rect)) {
-        self.label.bounds(sink);
-        self.icon.bounds(sink);
-        self.message.bounds(sink);
         self.left.bounds(sink);
         self.right.bounds(sink);
     }
 }
-
-pub struct InstallLayout {
-    pub label: Rect,
-    pub icon: Rect,
-    pub message: Rect,
-    pub left: Rect,
-    pub right: Rect
-}
-
-impl InstallLayout {
-    pub fn middle(area: Rect) -> Self {
-        let grid = Grid::new(area, 10, 6);
-        Self {
-            label: Rect::new(
-                grid.row_col(0, 0).top_left(),
-                grid.row_col(0, 5).bottom_right(),
-            ),
-            icon: Rect::new(
-                grid.row_col(1, 0).top_left(),
-                grid.row_col(7, 1).bottom_right(),
-            ),
-            message: Rect::new(
-                grid.row_col(1, 2).top_left(),
-                grid.row_col(7, 5).bottom_right(),
-            ),
-            left: Rect::new(
-                grid.row_col(8, 0).top_left(),
-                grid.row_col(9, 2).bottom_right(),
-            ),
-            right: Rect::new(
-                grid.row_col(8, 3).top_left(),
-                grid.row_col(9, 5).bottom_right(),
-            ),
-        }
-    }
-}
-

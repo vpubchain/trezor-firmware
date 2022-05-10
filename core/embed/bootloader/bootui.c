@@ -229,7 +229,7 @@ void ui_screen_install_confirm_upgrade(const vendor_header *const vhdr,
                                        const image_header *const hdr) {
 
   const char *ver_str = format_ver("to version %d.%d.%d?", hdr->version);
-  install_confirm_upgrade(vhdr->vstr, ver_str);
+  install_confirm_upgrade(vhdr->vstr, vhdr->vstr_len, ver_str);
 
 //  display_bar(0, 0, DISPLAY_RESX, DISPLAY_RESY, COLOR_BL_BG);
 //  display_text(16, 32, "Firmware update", -1, FONT_NORMAL, COLOR_BL_FG,
