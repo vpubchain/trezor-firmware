@@ -7,10 +7,12 @@ mod loader;
 mod page;
 mod scroll;
 mod swipe;
+mod install;
 
 pub use button::{Button, ButtonContent, ButtonMsg, ButtonStyle, ButtonStyleSheet};
 pub use confirm::{HoldToConfirm, HoldToConfirmMsg};
 pub use dialog::{Dialog, DialogLayout, DialogMsg};
+pub use install::{Install, InstallLayout, InstallMsg};
 pub use frame::Frame;
 pub use keyboard::{
     bip39::Bip39Input,

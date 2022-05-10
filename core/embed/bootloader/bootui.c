@@ -34,6 +34,8 @@
 #include "mini_printf.h"
 #include "version.h"
 
+#include "rust_fn.h"
+
 #if defined TREZOR_MODEL_T
 #include "touch.h"
 #elif defined TREZOR_MODEL_R
@@ -225,18 +227,22 @@ void ui_screen_firmware_fingerprint(const image_header *const hdr) {
 
 void ui_screen_install_confirm_upgrade(const vendor_header *const vhdr,
                                        const image_header *const hdr) {
-  display_bar(0, 0, DISPLAY_RESX, DISPLAY_RESY, COLOR_BL_BG);
-  display_text(16, 32, "Firmware update", -1, FONT_NORMAL, COLOR_BL_FG,
-               COLOR_BL_BG);
-  display_bar(16, 44, DISPLAY_RESX - 14 * 2, 1, COLOR_BL_FG);
-  display_icon(16, 54, 32, 32, toi_icon_info + 12, sizeof(toi_icon_info) - 12,
-               COLOR_BL_FG, COLOR_BL_BG);
-  display_text(55, 70, "Update firmware by", -1, FONT_NORMAL, COLOR_BL_FG,
-               COLOR_BL_BG);
-  int next_y = display_vendor_string(vhdr->vstr, vhdr->vstr_len, COLOR_BL_FG);
+
   const char *ver_str = format_ver("to version %d.%d.%d?", hdr->version);
-  display_text(55, next_y, ver_str, -1, FONT_NORMAL, COLOR_BL_FG, COLOR_BL_BG);
-  ui_confirm_cancel_buttons();
+  install_confirm_upgrade(vhdr->vstr, ver_str);
+
+//  display_bar(0, 0, DISPLAY_RESX, DISPLAY_RESY, COLOR_BL_BG);
+//  display_text(16, 32, "Firmware update", -1, FONT_NORMAL, COLOR_BL_FG,
+//               COLOR_BL_BG);
+//  display_bar(16, 44, DISPLAY_RESX - 14 * 2, 1, COLOR_BL_FG);
+//  display_icon(16, 54, 32, 32, toi_icon_info + 12, sizeof(toi_icon_info) - 12,
+//               COLOR_BL_FG, COLOR_BL_BG);
+//  display_text(55, 70, "Update firmware by", -1, FONT_NORMAL, COLOR_BL_FG,
+//               COLOR_BL_BG);
+//  int next_y = display_vendor_string(vhdr->vstr, vhdr->vstr_len, COLOR_BL_FG);
+//  const char *ver_str = format_ver("to version %d.%d.%d?", hdr->version);
+//  display_text(55, next_y, ver_str, -1, FONT_NORMAL, COLOR_BL_FG, COLOR_BL_BG);
+//  ui_confirm_cancel_buttons();
 }
 
 void ui_screen_install_confirm_newvendor_or_downgrade_wipe(
