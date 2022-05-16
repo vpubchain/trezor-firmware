@@ -288,20 +288,22 @@ void ui_screen_install_progress_upload(int pos) {
 // wipe UI
 
 void ui_screen_wipe_confirm(void) {
-  display_bar(0, 0, DISPLAY_RESX, DISPLAY_RESY, COLOR_BL_BG);
-  display_text(16, 32, "Wipe device", -1, FONT_NORMAL, COLOR_BL_FG,
-               COLOR_BL_BG);
-  display_bar(16, 44, DISPLAY_RESX - 14 * 2, 1, COLOR_BL_FG);
-  display_icon(16, 54, 32, 32, toi_icon_info + 12, sizeof(toi_icon_info) - 12,
-               COLOR_BL_FG, COLOR_BL_BG);
-  display_text(55, 70, "Do you want to", -1, FONT_NORMAL, COLOR_BL_FG,
-               COLOR_BL_BG);
-  display_text(55, 95, "wipe the device?", -1, FONT_NORMAL, COLOR_BL_FG,
-               COLOR_BL_BG);
+  screen_wipe_confirm();
 
-  display_text_center(120, 170, "Seed will be erased!", -1, FONT_NORMAL,
-                      COLOR_BL_FAIL, COLOR_BL_BG);
-  ui_confirm_cancel_buttons();
+//  display_bar(0, 0, DISPLAY_RESX, DISPLAY_RESY, COLOR_BL_BG);
+//  display_text(16, 32, "Wipe device", -1, FONT_NORMAL, COLOR_BL_FG,
+//               COLOR_BL_BG);
+//  display_bar(16, 44, DISPLAY_RESX - 14 * 2, 1, COLOR_BL_FG);
+//  display_icon(16, 54, 32, 32, toi_icon_info + 12, sizeof(toi_icon_info) - 12,
+//               COLOR_BL_FG, COLOR_BL_BG);
+//  display_text(55, 70, "Do you want to", -1, FONT_NORMAL, COLOR_BL_FG,
+//               COLOR_BL_BG);
+//  display_text(55, 95, "wipe the device?", -1, FONT_NORMAL, COLOR_BL_FG,
+//               COLOR_BL_BG);
+//
+//  display_text_center(120, 170, "Seed will be erased!", -1, FONT_NORMAL,
+//                      COLOR_BL_FAIL, COLOR_BL_BG);
+//  ui_confirm_cancel_buttons();
 }
 
 void ui_screen_wipe(void) {

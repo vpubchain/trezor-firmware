@@ -6,6 +6,7 @@
 #define _RUST_FN_H
 
 void install_confirm_upgrade(const char * vendor_str, uint8_t vendor_str_len, const char * version_str);
+void screen_wipe_confirm(void);
 void hello_world(const char* text);
 
 

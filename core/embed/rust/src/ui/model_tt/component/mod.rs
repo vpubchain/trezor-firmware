@@ -8,13 +8,13 @@ mod page;
 mod scroll;
 mod swipe;
 mod install;
-mod icon;
+mod wipe;
 
 pub use button::{Button, ButtonContent, ButtonMsg, ButtonStyle, ButtonStyleSheet};
 pub use confirm::{HoldToConfirm, HoldToConfirmMsg};
 pub use dialog::{Dialog, DialogLayout, DialogMsg};
-pub use icon::{Icon, IconMsg};
 pub use install::{Install, InstallMsg};
+pub use wipe::{Wipe, WipeMsg};
 pub use frame::Frame;
 pub use keyboard::{
     bip39::Bip39Input,
