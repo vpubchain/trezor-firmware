@@ -3,7 +3,7 @@ use crate::ui::display::Color;
 use crate::ui::geometry::Point;
 use crate::ui::model_tt::component::{ButtonStyle, ButtonStyleSheet};
 use crate::ui::model_tt::theme::{BG, FG, FONT_BOLD, GREEN, GREEN_DARK, GREY_LIGHT, RADIUS, RED, RED_DARK};
-use super::{theme, Button, ButtonMsg, Loader, LoaderMsg};
+use super::{theme, Button};
 use super::super::constant::{HEIGHT, WIDTH};
 
 pub enum InstallMsg<L, R>  {

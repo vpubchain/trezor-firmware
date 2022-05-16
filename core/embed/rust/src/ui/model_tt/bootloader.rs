@@ -4,13 +4,13 @@ use super::{
     component::Install,
     component::Dialog,
     component::Button,
-    component::Icon,
 };
-use crate::{ui::component::text::formatted::FormattedText, trezorhal::display};
-use crate::ui::component::{Component, ComponentExt};
+use crate::{ui::component::text::formatted::FormattedText};
+use crate::ui::component::{Component};
 use cstr_core::CStr;
 use crate::ui::component::text::layout::DefaultTextTheme;
 use crate::ui::display::{Color, Font};
+use crate::ui::model_tt::component::Wipe;
 use crate::ui::model_tt::theme::{BG, FG, FONT_BOLD, FONT_MEDIUM, FONT_MONO, FONT_NORMAL, GREY_LIGHT};
 
 #[no_mangle]
