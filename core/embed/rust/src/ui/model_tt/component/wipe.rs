@@ -13,7 +13,7 @@ pub enum WipeMsg<L, R>  {
 
 pub struct Wipe< M> {
     label: &'static str,
-    icon: &'static [u8],
+    icon: Option<&'static [u8]>,
     message: Child<M>,
     left: Child<Button<&'static str>>,
     right: Child<Button<&'static str>>,
@@ -91,7 +91,7 @@ impl<M> Wipe<M>
     where
         M: Component,
 {
-    pub fn new(label: &'static str, icon: &'static [u8] , message: M) -> Self {
+    pub fn new(label: &'static str, icon: Option<&'static [u8]> , message: M) -> Self {
 
         Self {
             label,
@@ -136,12 +136,16 @@ impl<M> Component for Wipe<M>
         display::rect_fill(Rect::new (Point::new(16,44), Point::new(WIDTH-12, 45)), theme::BG);
         display::text(Point::new(16,32), self.label, theme::FONT_NORMAL, theme::BG, theme::FG);
         display::text_center(Point::new(120,170), "Seed will be erased!", theme::FONT_NORMAL, Color::rgb(0xFF, 0x00, 0x00), theme::FG);
-        display::icon(
-            Point::new(32,70),
-            self.icon,
-            Color::rgb(0x99, 0x99, 0x99),
-            FG,
-        );
+
+        match self.icon {
+            Some(icon) => {display::icon(
+                Point::new(32, 70),
+                icon,
+                Color::rgb(0x99, 0x99, 0x99),
+                FG,
+            );}
+            None => ()
+        }
 
         // self.label.paint();
         self.message.paint();

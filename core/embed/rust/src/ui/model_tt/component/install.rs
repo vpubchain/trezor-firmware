@@ -13,7 +13,7 @@ pub enum InstallMsg<L, R>  {
 
 pub struct Install< M> {
     label: &'static str,
-    icon: &'static [u8],
+    icon: Option<&'static [u8]>,
     message: Child<M>,
     warning: Option<&'static str>,
     left: Child<Button<&'static str>>,
@@ -92,7 +92,7 @@ impl<M> Install<M>
     where
         M: Component,
 {
-    pub fn new(label: &'static str, icon: &'static [u8] , message: M) -> Self {
+    pub fn new(label: &'static str, icon: Option<&'static [u8]> , message: M) -> Self {
 
         Self {
             label,
@@ -141,12 +141,17 @@ impl<M> Component for Install<M>
         display::rect_fill(Rect::new (Point::new(0,0), Point::new(WIDTH, HEIGHT)), theme::FG);
         display::rect_fill(Rect::new (Point::new(16,44), Point::new(WIDTH-12, 45)), theme::BG);
         display::text(Point::new(16,32), self.label, theme::FONT_NORMAL, theme::BG, theme::FG);
-        display::icon(
-            Point::new(32,70),
-            self.icon,
-            Color::rgb(0x99, 0x99, 0x99),
-            FG,
-        );
+
+
+        match self.icon {
+            Some(icon) => {display::icon(
+                Point::new(32, 70),
+                icon,
+                Color::rgb(0x99, 0x99, 0x99),
+                FG,
+            );}
+            None => ()
+        }
 
         match self.warning {
             Some(warning) => {
