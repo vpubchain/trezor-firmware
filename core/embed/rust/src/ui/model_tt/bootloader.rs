@@ -10,7 +10,7 @@ use crate::ui::component::{Component};
 use cstr_core::CStr;
 use crate::ui::component::text::layout::DefaultTextTheme;
 use crate::ui::display::{Color, Font};
-use crate::ui::model_tt::component::Wipe;
+// use crate::ui::model_tt::component::Wipe;
 use crate::ui::model_tt::theme::{BG, FG, FONT_BOLD, FONT_MEDIUM, FONT_MONO, FONT_NORMAL, GREY_LIGHT};
 
 #[no_mangle]
@@ -75,13 +75,14 @@ extern "C" fn screen_wipe_confirm() {
 
     const ICON: &'static [u8] = include_res!("model_tt/res/info.toif");
 
-    let mut frame = Wipe::new(
+    let mut frame = Install::new(
         "Wipe device",
         ICON,
         FormattedText::new::<TTBootloaderText>(
             "{text}",
         ).with("text", "Do you want to wipe the device?")
     );
+    frame.add_warning("Seed will be erased!");
     frame.place(constant::screen());
     frame.paint();
 

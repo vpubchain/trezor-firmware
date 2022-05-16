@@ -15,6 +15,7 @@ pub struct Install< M> {
     label: &'static str,
     icon: &'static [u8],
     message: Child<M>,
+    warning: Option<&'static str>,
     left: Child<Button<&'static str>>,
     right: Child<Button<&'static str>>,
 }
@@ -96,11 +97,16 @@ impl<M> Install<M>
         Self {
             label,
             icon,
+            warning: None,
             message: Child::new(message),
             left: Child::new(Button::with_icon(theme::ICON_CANCEL).styled(button_cancel())),
             right: Child::new(Button::with_icon(theme::ICON_CONFIRM).styled(button_confirm())),
 
         }
+    }
+
+    pub fn add_warning(&mut self, warning: &'static str) {
+        self.warning = Option::from(warning);
     }
 
     pub fn inner(&self) -> &M {
@@ -141,6 +147,13 @@ impl<M> Component for Install<M>
             Color::rgb(0x99, 0x99, 0x99),
             FG,
         );
+
+        match self.warning {
+            Some(warning) => {
+                display::text_center(Point::new(120,170), warning, theme::FONT_NORMAL, Color::rgb(0xFF, 0x00, 0x00), theme::FG);
+            }
+            None => ()
+        }
 
         // self.label.paint();
         self.message.paint();
