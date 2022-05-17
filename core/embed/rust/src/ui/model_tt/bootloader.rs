@@ -53,7 +53,7 @@ extern "C" fn install_confirm_upgrade(vendor_str: *const cty::c_char, vendor_str
     let version = unsafe { CStr::from_ptr(version).to_str().unwrap() };
 
 
-    const ICON: &'static [u8] = include_res!("model_tt/res/info.toif");
+    const ICON: Option<&'static [u8]> = Some(include_res!("model_tt/res/info.toif"));
     //const ICON: Option<&'static [u8]> = None;
 
     let mut frame = Install::new(
@@ -74,17 +74,17 @@ extern "C" fn install_confirm_upgrade(vendor_str: *const cty::c_char, vendor_str
 #[no_mangle]
 extern "C" fn screen_wipe_confirm() {
 
-    const ICON: &'static [u8] = include_res!("model_tt/res/info.toif");
+    const ICON: Option<&'static [u8]> = Some(include_res!("model_tt/res/info.toif"));
     //const ICON: Option<&'static [u8]> = None;
 
-    let mut frame = Wipe::new(
+    let mut frame = Install::new(
         "Wipe device",
         ICON,
         FormattedText::new::<TTBootloaderText>(
             "{text}",
         ).with("text", "Do you want to wipe the device?")
     );
-    // frame.add_warning("Seed will be erased!");
+    frame.add_warning("Seed will be erased!");
     frame.place(constant::screen());
     frame.paint();
 
