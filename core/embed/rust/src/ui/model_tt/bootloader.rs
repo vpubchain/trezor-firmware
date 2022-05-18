@@ -8,10 +8,8 @@ use super::{
 use crate::{ui::component::text::formatted::FormattedText};
 use crate::ui::component::{Component};
 use cstr_core::CStr;
-use crate::ui::component::text::layout::DefaultTextTheme;
-use crate::ui::display::{Color, Font};
-use crate::ui::model_tt::component::Wipe;
-use crate::ui::model_tt::theme::{BG, FG, FONT_BOLD, FONT_MEDIUM, FONT_MONO, FONT_NORMAL, GREY_LIGHT};
+use crate::ui::model_tt::component::{BldIntro};
+use crate::ui::model_tt::theme::{TTBootloaderText};
 
 #[no_mangle]
 extern "C" fn hello_world(text: *const cty::c_char) {
@@ -29,22 +27,6 @@ extern "C" fn hello_world(text: *const cty::c_char) {
 }
 
 
-pub struct TTBootloaderText;
-
-impl DefaultTextTheme for TTBootloaderText {
-    const BACKGROUND_COLOR: Color = FG;
-    const TEXT_FONT: Font = FONT_NORMAL;
-    const TEXT_COLOR: Color = BG;
-    const HYPHEN_FONT: Font = FONT_BOLD;
-    const HYPHEN_COLOR: Color = GREY_LIGHT;
-    const ELLIPSIS_FONT: Font = FONT_BOLD;
-    const ELLIPSIS_COLOR: Color = GREY_LIGHT;
-
-    const NORMAL_FONT: Font = FONT_NORMAL;
-    const MEDIUM_FONT: Font = FONT_MEDIUM;
-    const BOLD_FONT: Font = FONT_BOLD;
-    const MONO_FONT: Font = FONT_MONO;
-}
 
 #[no_mangle]
 extern "C" fn install_confirm_upgrade(vendor_str: *const cty::c_char, vendor_str_len: u8, version: *const cty::c_char) {
@@ -85,6 +67,20 @@ extern "C" fn screen_wipe_confirm() {
         ).with("text", "Do you want to wipe the device?")
     );
     frame.add_warning("Seed will be erased!");
+    frame.place(constant::screen());
+    frame.paint();
+
+}
+
+
+#[no_mangle]
+extern "C" fn screen_menu() {
+}
+
+
+#[no_mangle]
+extern "C" fn screen_intro() {
+    let mut frame = BldIntro::new();
     frame.place(constant::screen());
     frame.paint();
 

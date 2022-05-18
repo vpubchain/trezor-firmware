@@ -283,6 +283,23 @@ impl DefaultTextTheme for TTDefaultText {
     const MONO_FONT: Font = FONT_MONO;
 }
 
+pub struct TTBootloaderText;
+
+impl DefaultTextTheme for TTBootloaderText {
+    const BACKGROUND_COLOR: Color = FG;
+    const TEXT_FONT: Font = FONT_NORMAL;
+    const TEXT_COLOR: Color = BG;
+    const HYPHEN_FONT: Font = FONT_BOLD;
+    const HYPHEN_COLOR: Color = GREY_LIGHT;
+    const ELLIPSIS_FONT: Font = FONT_BOLD;
+    const ELLIPSIS_COLOR: Color = GREY_LIGHT;
+
+    const NORMAL_FONT: Font = FONT_NORMAL;
+    const MEDIUM_FONT: Font = FONT_MEDIUM;
+    const BOLD_FONT: Font = FONT_BOLD;
+    const MONO_FONT: Font = FONT_MONO;
+}
+
 pub const CONTENT_BORDER: i32 = 5;
 pub const KEYBOARD_SPACING: i32 = 8;
 

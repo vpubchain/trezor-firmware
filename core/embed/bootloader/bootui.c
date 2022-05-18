@@ -182,22 +182,24 @@ static int display_vendor_string(const char *text, int textlen,
 
 void ui_screen_firmware_info(const vendor_header *const vhdr,
                              const image_header *const hdr) {
-  display_bar(0, 0, DISPLAY_RESX, DISPLAY_RESY, COLOR_BL_BG);
-  const char *ver_str = format_ver("Bootloader %d.%d.%d", VERSION_UINT32);
-  display_text(16, 32, ver_str, -1, FONT_NORMAL, COLOR_BL_FG, COLOR_BL_BG);
-  display_bar(16, 44, DISPLAY_RESX - 14 * 2, 1, COLOR_BL_FG);
-  display_icon(16, 54, 32, 32, toi_icon_info + 12, sizeof(toi_icon_info) - 12,
-               COLOR_BL_GRAY, COLOR_BL_BG);
-  if (vhdr && hdr) {
-    ver_str = format_ver("Firmware %d.%d.%d by", (hdr->version));
-    display_text(55, 70, ver_str, -1, FONT_NORMAL, COLOR_BL_GRAY, COLOR_BL_BG);
-    display_vendor_string(vhdr->vstr, vhdr->vstr_len, COLOR_BL_GRAY);
-  } else {
-    display_text(55, 70, "No Firmware", -1, FONT_NORMAL, COLOR_BL_GRAY,
-                 COLOR_BL_BG);
-  }
-  display_text_center(120, 220, "Go to trezor.io/start", -1, FONT_NORMAL,
-                      COLOR_BL_FG, COLOR_BL_BG);
+
+  screen_intro();
+//  display_bar(0, 0, DISPLAY_RESX, DISPLAY_RESY, COLOR_BL_BG);
+//  const char *ver_str = format_ver("Bootloader %d.%d.%d", VERSION_UINT32);
+//  display_text(16, 32, ver_str, -1, FONT_NORMAL, COLOR_BL_FG, COLOR_BL_BG);
+//  display_bar(16, 44, DISPLAY_RESX - 14 * 2, 1, COLOR_BL_FG);
+//  display_icon(16, 54, 32, 32, toi_icon_info + 12, sizeof(toi_icon_info) - 12,
+//               COLOR_BL_GRAY, COLOR_BL_BG);
+//  if (vhdr && hdr) {
+//    ver_str = format_ver("Firmware %d.%d.%d by", (hdr->version));
+//    display_text(55, 70, ver_str, -1, FONT_NORMAL, COLOR_BL_GRAY, COLOR_BL_BG);
+//    display_vendor_string(vhdr->vstr, vhdr->vstr_len, COLOR_BL_GRAY);
+//  } else {
+//    display_text(55, 70, "No Firmware", -1, FONT_NORMAL, COLOR_BL_GRAY,
+//                 COLOR_BL_BG);
+//  }
+//  display_text_center(120, 220, "Go to trezor.io/start", -1, FONT_NORMAL,
+//                      COLOR_BL_FG, COLOR_BL_BG);
 }
 
 void ui_screen_firmware_fingerprint(const image_header *const hdr) {
