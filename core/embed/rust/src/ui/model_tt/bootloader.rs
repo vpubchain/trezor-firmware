@@ -84,4 +84,11 @@ extern "C" fn screen_intro() {
     frame.place(constant::screen());
     frame.paint();
 
+    loop {
+        let evt = frame.event();
+
+        if evt != None {
+            break;
+        }
+    }
 }
