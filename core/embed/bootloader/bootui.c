@@ -218,7 +218,7 @@ void ui_screen_firmware_fingerprint(const image_header *const hdr) {
   }
   for (int i = 0; i < 4; i++) {
     display_text_center(120, 70 + i * 25, fingerprint_str + i * 16, 16,
-                        FONT_MONO, COLOR_BL_FG, COLOR_BL_BG);
+                        FONT_NORMAL, COLOR_BL_FG, COLOR_BL_BG);
   }
 
   display_bar_radius(9, 184, 222, 50, COLOR_BL_DONE, COLOR_BL_BG, 4);
