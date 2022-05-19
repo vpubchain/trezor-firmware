@@ -17,7 +17,7 @@ pub use confirm::{HoldToConfirm, HoldToConfirmMsg};
 pub use dialog::{Dialog, DialogLayout, DialogMsg};
 pub use install::{Install, InstallMsg};
 pub use wipe::{Wipe, WipeMsg};
-pub use bld_intro::{BldIntro};
+pub use bld_intro::{BldIntro, BldIntroMsg};
 pub use frame::Frame;
 pub use keyboard::{
     bip39::Bip39Input,

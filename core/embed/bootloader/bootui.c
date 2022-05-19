@@ -183,7 +183,9 @@ static int display_vendor_string(const char *text, int textlen,
 void ui_screen_firmware_info(const vendor_header *const vhdr,
                              const image_header *const hdr) {
 
-  screen_intro();
+  screen_intro(0, 0, 0);
+
+
 //  display_bar(0, 0, DISPLAY_RESX, DISPLAY_RESY, COLOR_BL_BG);
 //  const char *ver_str = format_ver("Bootloader %d.%d.%d", VERSION_UINT32);
 //  display_text(16, 32, ver_str, -1, FONT_NORMAL, COLOR_BL_FG, COLOR_BL_BG);

@@ -1,11 +1,12 @@
-use crate::ui::{component::{Child, Component, Event, EventCtx}, display, geometry::{Rect}};
+use crate::ui::{component::{Child, Component, Event, EventCtx}, display, geometry::Rect};
 use crate::ui::component::FormattedText;
 use crate::ui::component::text::layout::DefaultTextTheme;
-use crate::ui::display::{Color, alpha, Font};
+use crate::ui::display::{alpha, Color, Font};
 use crate::ui::geometry::Point;
 use crate::ui::model_tt::component::{ButtonStyle, ButtonStyleSheet};
 use crate::ui::model_tt::theme::{FONT_BOLD, FONT_MEDIUM, FONT_MONO, FONT_NORMAL, GREY_LIGHT, RED, RED_DARK};
-use super::{theme, Button};
+
+use super::{Button, theme};
 use super::super::constant::{HEIGHT, WIDTH};
 
 
@@ -111,6 +112,7 @@ impl Component for BldIntro
     }
 
     fn event(&mut self, ctx: &mut EventCtx, event: Event) -> Option<Self::Msg> {
+        self.text1.event(ctx, event);
         self.menu.event(ctx, event).map(Self::Msg::Menu)
     }
 

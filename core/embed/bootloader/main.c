@@ -94,100 +94,115 @@ static void usb_init_all(secbool usb21_landing) {
   usb_start();
 }
 
+
+secbool bootloader_usb_process(const vendor_header *const vhdr,
+                            const image_header *const hdr) {
+  uint8_t buf[USB_PACKET_SIZE];
+
+  if (sectrue != usb_webusb_can_read(USB_IFACE_NUM)){
+    return 0xFFFFFFFF;
+  }
+
+  int r = usb_webusb_read(USB_IFACE_NUM, buf, USB_PACKET_SIZE);
+  if (r != USB_PACKET_SIZE) {
+    return 0xFFFFFFFF;
+  }
+  uint16_t msg_id;
+  uint32_t msg_size;
+  if (sectrue != msg_parse_header(buf, &msg_id, &msg_size)) {
+    // invalid header -> discard
+    return 0xFFFFFFFF;
+  }
+  switch (msg_id) {
+    case 0:  // Initialize
+      process_msg_Initialize(USB_IFACE_NUM, msg_size, buf, vhdr, hdr);
+      break;
+    case 1:  // Ping
+      process_msg_Ping(USB_IFACE_NUM, msg_size, buf);
+      break;
+    case 5:  // WipeDevice
+      ui_fadeout();
+      ui_screen_wipe_confirm();
+      ui_fadein();
+      int response = ui_user_input(INPUT_CONFIRM | INPUT_CANCEL);
+      if (INPUT_CANCEL == response) {
+        ui_fadeout();
+        ui_screen_firmware_info(vhdr, hdr);
+        ui_fadein();
+        send_user_abort(USB_IFACE_NUM, "Wipe cancelled");
+        break;
+      }
+      ui_fadeout();
+      ui_screen_wipe();
+      ui_fadein();
+      r = process_msg_WipeDevice(USB_IFACE_NUM, msg_size, buf);
+      if (r < 0) {  // error
+        ui_fadeout();
+        ui_screen_fail();
+        ui_fadein();
+        usb_stop();
+        usb_deinit();
+        return secfalse; // shutdown
+      } else {            // success
+        ui_fadeout();
+        ui_screen_done(0, sectrue);
+        ui_fadein();
+        usb_stop();
+        usb_deinit();
+        return secfalse; // shutdown
+      }
+      break;
+    case 6:  // FirmwareErase
+      process_msg_FirmwareErase(USB_IFACE_NUM, msg_size, buf);
+      break;
+    case 7:  // FirmwareUpload
+      r = process_msg_FirmwareUpload(USB_IFACE_NUM, msg_size, buf);
+      if (r < 0 && r != -4) {  // error, but not user abort (-4)
+        ui_fadeout();
+        ui_screen_fail();
+        ui_fadein();
+        usb_stop();
+        usb_deinit();
+        return secfalse; // shutdown
+      } else if (r == 0) {  // last chunk received
+        ui_screen_install_progress_upload(1000);
+        ui_fadeout();
+        ui_screen_done(4, sectrue);
+        ui_fadein();
+        ui_screen_done(3, secfalse);
+        hal_delay(1000);
+        ui_screen_done(2, secfalse);
+        hal_delay(1000);
+        ui_screen_done(1, secfalse);
+        hal_delay(1000);
+        usb_stop();
+        usb_deinit();
+        ui_fadeout();
+        return sectrue;  // jump to firmware
+      }
+      break;
+    case 55:  // GetFeatures
+      process_msg_GetFeatures(USB_IFACE_NUM, msg_size, buf, vhdr, hdr);
+      break;
+    default:
+      process_msg_unknown(USB_IFACE_NUM, msg_size, buf);
+      break;
+  }
+  return 0xFFFFFFFF;
+}
+
+
 secbool bootloader_usb_loop(const vendor_header *const vhdr,
                                    const image_header *const hdr) {
   // if both are NULL, we don't have a firmware installed
   // let's show a webusb landing page in this case
   usb_init_all((vhdr == NULL && hdr == NULL) ? sectrue : secfalse);
 
-  uint8_t buf[USB_PACKET_SIZE];
 
   for (;;) {
-    int r = usb_webusb_read_blocking(USB_IFACE_NUM, buf, USB_PACKET_SIZE,
-                                     USB_TIMEOUT);
-    if (r != USB_PACKET_SIZE) {
-      continue;
-    }
-    uint16_t msg_id;
-    uint32_t msg_size;
-    if (sectrue != msg_parse_header(buf, &msg_id, &msg_size)) {
-      // invalid header -> discard
-      continue;
-    }
-    switch (msg_id) {
-      case 0:  // Initialize
-        process_msg_Initialize(USB_IFACE_NUM, msg_size, buf, vhdr, hdr);
-        break;
-      case 1:  // Ping
-        process_msg_Ping(USB_IFACE_NUM, msg_size, buf);
-        break;
-      case 5:  // WipeDevice
-        ui_fadeout();
-        ui_screen_wipe_confirm();
-        ui_fadein();
-        int response = ui_user_input(INPUT_CONFIRM | INPUT_CANCEL);
-        if (INPUT_CANCEL == response) {
-          ui_fadeout();
-          ui_screen_firmware_info(vhdr, hdr);
-          ui_fadein();
-          send_user_abort(USB_IFACE_NUM, "Wipe cancelled");
-          break;
-        }
-        ui_fadeout();
-        ui_screen_wipe();
-        ui_fadein();
-        r = process_msg_WipeDevice(USB_IFACE_NUM, msg_size, buf);
-        if (r < 0) {  // error
-          ui_fadeout();
-          ui_screen_fail();
-          ui_fadein();
-          usb_stop();
-          usb_deinit();
-          return secfalse;  // shutdown
-        } else {            // success
-          ui_fadeout();
-          ui_screen_done(0, sectrue);
-          ui_fadein();
-          usb_stop();
-          usb_deinit();
-          return secfalse;  // shutdown
-        }
-        break;
-      case 6:  // FirmwareErase
-        process_msg_FirmwareErase(USB_IFACE_NUM, msg_size, buf);
-        break;
-      case 7:  // FirmwareUpload
-        r = process_msg_FirmwareUpload(USB_IFACE_NUM, msg_size, buf);
-        if (r < 0 && r != -4) {  // error, but not user abort (-4)
-          ui_fadeout();
-          ui_screen_fail();
-          ui_fadein();
-          usb_stop();
-          usb_deinit();
-          return secfalse;    // shutdown
-        } else if (r == 0) {  // last chunk received
-          ui_screen_install_progress_upload(1000);
-          ui_fadeout();
-          ui_screen_done(4, sectrue);
-          ui_fadein();
-          ui_screen_done(3, secfalse);
-          hal_delay(1000);
-          ui_screen_done(2, secfalse);
-          hal_delay(1000);
-          ui_screen_done(1, secfalse);
-          hal_delay(1000);
-          usb_stop();
-          usb_deinit();
-          ui_fadeout();
-          return sectrue;  // jump to firmware
-        }
-        break;
-      case 55:  // GetFeatures
-        process_msg_GetFeatures(USB_IFACE_NUM, msg_size, buf, vhdr, hdr);
-        break;
-      default:
-        process_msg_unknown(USB_IFACE_NUM, msg_size, buf);
-        break;
+    secbool result = bootloader_usb_process(vhdr, hdr);
+    if (result != 0xFFFFFFFF){
+      return result;
     }
   }
 }
@@ -341,12 +356,42 @@ int main(void) {
   // ... or we have stay_in_bootloader flag to force it
   if (touched || stay_in_bootloader == sectrue) {
     // no ui_fadeout(); - we already start from black screen
-    ui_screen_firmware_info(&vhdr, &hdr);
+    uint32_t screen = 0;
+    usb_init_all(secfalse);
+    screen_intro(0, 0, 0);
     ui_fadein();
+    while(true){
+      bool process_usb = true;
+      uint32_t usb_result = 0xFFFFFFFF;
+      uint32_t evt = touch_read();
+      uint32_t evt_type = evt >> 24;
+      uint16_t x = touch_unpack_x(evt);
+      uint16_t y = touch_unpack_y(evt);
 
-    // and start the usb loop
-    if (bootloader_usb_loop(&vhdr, &hdr) != sectrue) {
-      return 1;
+      switch(screen) {
+        case 0:
+          if (evt_type == 1 || evt_type == 4) {
+            uint32_t evt_result = screen_intro(evt_type, x, y);
+            if (evt_result == 1){
+              ui_fadeout();
+              screen_wipe_confirm();
+              ui_fadein();
+              screen = 1;
+            }
+          }
+          break;
+        case 1:
+          break;
+        default:
+          break;
+      }
+
+      if (process_usb) {
+        usb_result = bootloader_usb_process(&vhdr, &hdr);
+        if (usb_result != 0xFFFFFFFF) {
+          break;
+        }
+      }
     }
   }
 

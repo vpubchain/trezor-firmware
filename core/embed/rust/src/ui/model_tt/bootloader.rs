@@ -6,10 +6,12 @@ use super::{
     component::Button,
 };
 use crate::{ui::component::text::formatted::FormattedText};
-use crate::ui::component::{Component};
+use crate::ui::component::{Component, Event, EventCtx};
 use cstr_core::CStr;
-use crate::ui::model_tt::component::{BldIntro};
+use crate::ui::model_tt::component::{BldIntro, BldIntroMsg, ButtonMsg};
 use crate::ui::model_tt::theme::{TTBootloaderText};
+use crate::ui::event::TouchEvent;
+use crate::ui::model_tt::component::ButtonMsg::{Clicked, Pressed, Released, LongPressed};
 
 #[no_mangle]
 extern "C" fn hello_world(text: *const cty::c_char) {
@@ -79,16 +81,27 @@ extern "C" fn screen_menu() {
 
 
 #[no_mangle]
-extern "C" fn screen_intro() {
+extern "C" fn screen_intro(event: u32, x: u32, y:u32) -> u32 {
     let mut frame = BldIntro::new();
     frame.place(constant::screen());
-    frame.paint();
 
-    loop {
-        let evt = frame.event();
+    if event != 0 {
+        let event = TouchEvent::new(event, x, y);
+        if let Ok(e) = event {
+            let mut ctx =  EventCtx::new();
+            ctx.request_paint();
+            let msg = frame.event(&mut ctx, Event::Touch(e));
+            frame.paint();
 
-        if evt != None {
-            break;
+            if let Some(BldIntroMsg::Menu(Pressed)) = msg {
+                return 1;
+            }
         }
     }
+
+    else {
+        frame.paint();
+    }
+
+    return 0;
 }
