@@ -358,7 +358,6 @@ int main(void) {
     // no ui_fadeout(); - we already start from black screen
     uint32_t screen = 0;
     usb_init_all(secfalse);
-    ui_fadein();
 
     while(true){
       bool process_usb = true;

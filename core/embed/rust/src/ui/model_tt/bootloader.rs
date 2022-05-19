@@ -14,6 +14,7 @@ use crate::ui::event::TouchEvent;
 use crate::ui::model_tt::component::ButtonMsg::{Clicked, Pressed, Released, LongPressed};
 use crate::trezorhal::io;
 use crate::trezorhal::io::{io_touch_read, io_touch_unpack_x, io_touch_unpack_y};
+use crate::ui::display;
 
 #[no_mangle]
 extern "C" fn hello_world(text: *const cty::c_char) {
@@ -87,6 +88,7 @@ extern "C" fn screen_intro() -> u32 {
     let mut frame = BldIntro::new();
     frame.place(constant::screen());
     frame.paint();
+    display::fadein();
 
     loop {
 
