@@ -95,6 +95,11 @@ impl BldIntro
         }
     }
 
+    pub fn repaint(&mut self) {
+        self.text1.paint();
+        self.menu.paint();
+    }
+
 }
 
 

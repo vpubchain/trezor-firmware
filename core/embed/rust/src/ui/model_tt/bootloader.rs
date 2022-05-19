@@ -12,6 +12,8 @@ use crate::ui::model_tt::component::{BldIntro, BldIntroMsg, ButtonMsg};
 use crate::ui::model_tt::theme::{TTBootloaderText};
 use crate::ui::event::TouchEvent;
 use crate::ui::model_tt::component::ButtonMsg::{Clicked, Pressed, Released, LongPressed};
+use crate::trezorhal::io;
+use crate::trezorhal::io::{io_touch_read, io_touch_unpack_x, io_touch_unpack_y};
 
 #[no_mangle]
 extern "C" fn hello_world(text: *const cty::c_char) {
@@ -81,27 +83,28 @@ extern "C" fn screen_menu() {
 
 
 #[no_mangle]
-extern "C" fn screen_intro(event: u32, x: u32, y:u32) -> u32 {
+extern "C" fn screen_intro() -> u32 {
     let mut frame = BldIntro::new();
     frame.place(constant::screen());
+    frame.paint();
 
-    if event != 0 {
-        let event = TouchEvent::new(event, x, y);
-        if let Ok(e) = event {
-            let mut ctx =  EventCtx::new();
-            ctx.request_paint();
-            let msg = frame.event(&mut ctx, Event::Touch(e));
-            frame.paint();
+    loop {
 
-            if let Some(BldIntroMsg::Menu(Pressed)) = msg {
-                return 1;
+        let event = io_touch_read();
+        let event_type = event >> 24;
+        let x = io_touch_unpack_x(event) as u32;
+        let y = io_touch_unpack_y(event) as u32;
+
+        if event_type == 1 || event_type == 4 {
+            let event = TouchEvent::new(event_type, x, y);
+            if let Ok(e) = event {
+                let mut ctx =  EventCtx::new();
+                let msg = frame.event(&mut ctx, Event::Touch(e));
+                frame.repaint();
+                if let Some(BldIntroMsg::Menu(Clicked)) = msg {
+                    return 1;
+                }
             }
         }
     }
-
-    else {
-        frame.paint();
-    }
-
-    return 0;
 }

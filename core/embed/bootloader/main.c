@@ -358,26 +358,22 @@ int main(void) {
     // no ui_fadeout(); - we already start from black screen
     uint32_t screen = 0;
     usb_init_all(secfalse);
-    screen_intro(0, 0, 0);
     ui_fadein();
+
     while(true){
       bool process_usb = true;
       uint32_t usb_result = 0xFFFFFFFF;
-      uint32_t evt = touch_read();
-      uint32_t evt_type = evt >> 24;
-      uint16_t x = touch_unpack_x(evt);
-      uint16_t y = touch_unpack_y(evt);
+      uint32_t ui_result = 0;
 
       switch(screen) {
         case 0:
-          if (evt_type == 1 || evt_type == 4) {
-            uint32_t evt_result = screen_intro(evt_type, x, y);
-            if (evt_result == 1){
-              ui_fadeout();
-              screen_wipe_confirm();
-              ui_fadein();
-              screen = 1;
-            }
+          ui_result = screen_intro();
+          if (ui_result == 1){
+            ui_fadeout();
+            screen_wipe_confirm();
+            ui_fadein();
+            screen = 1;
+
           }
           break;
         case 1:

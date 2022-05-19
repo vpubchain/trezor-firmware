@@ -183,7 +183,7 @@ static int display_vendor_string(const char *text, int textlen,
 void ui_screen_firmware_info(const vendor_header *const vhdr,
                              const image_header *const hdr) {
 
-  screen_intro(0, 0, 0);
+  screen_intro();
 
 
 //  display_bar(0, 0, DISPLAY_RESX, DISPLAY_RESY, COLOR_BL_BG);
