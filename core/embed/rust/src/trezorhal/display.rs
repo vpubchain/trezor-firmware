@@ -3,6 +3,8 @@ use core::ptr;
 extern "C" {
     // trezorhal/display.c
     fn display_backlight(val: cty::c_int) -> cty::c_int;
+    fn display_fadeout();
+    fn display_fadein();
     fn display_text(
         x: cty::c_int,
         y: cty::c_int,
@@ -67,20 +69,13 @@ pub fn backlight(val: i32) -> i32 {
     unsafe { display_backlight(val) }
 }
 
-#[no_mangle]
-pub extern "C" fn text_rust(baseline_x: i32, baseline_y: i32, text: *const u8, text_len: i32, font: i32, fgcolor: u16, bgcolor: u16) {
-    unsafe {
-        display_text(
-            baseline_x,
-            baseline_y,
-            text,
-            text_len,
-            font,
-            fgcolor,
-            bgcolor,
-        )
-    }
+pub fn fadein()  {
+    unsafe { display_fadein() }
 }
+pub fn fadeout() {
+    unsafe { display_fadeout() }
+}
+
 
 pub fn text(baseline_x: i32, baseline_y: i32, text: &str, font: i32, fgcolor: u16, bgcolor: u16) {
     unsafe {
