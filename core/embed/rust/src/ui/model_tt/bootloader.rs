@@ -13,7 +13,7 @@ use crate::ui::model_tt::theme::{TTBootloaderText};
 use crate::ui::event::TouchEvent;
 use crate::ui::model_tt::component::ButtonMsg::{Clicked, Pressed, Released, LongPressed};
 use crate::trezorhal::io;
-use crate::trezorhal::io::{io_touch_read, io_touch_unpack_x, io_touch_unpack_y};
+use crate::trezorhal::io::{io_touch_read, io_touch_unpack_x, io_touch_unpack_y, io_usb_process};
 use crate::ui::display;
 
 #[no_mangle]
@@ -107,6 +107,15 @@ extern "C" fn screen_intro() -> u32 {
                     return 1;
                 }
             }
+        }
+
+        let usb_result = io_usb_process();
+
+        if usb_result == 0 {
+            return 2;
+        }
+        if usb_result == 0xAAAAAAAA_u32 {
+            return 3;
         }
     }
 }

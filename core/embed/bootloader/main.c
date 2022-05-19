@@ -56,6 +56,10 @@ static const uint8_t * const BOOTLOADER_KEYS[] = {
 //    (const uint8_t *)"\xee\x93\xa4\xf6\x6f\x8d\x16\xb8\x19\xbb\x9b\xeb\x9f\xfc\xcd\xfc\xdc\x14\x12\xe8\x7f\xee\x6a\x32\x4c\x2a\x99\xa1\xe0\xe6\x71\x48",
 };
 
+
+static vendor_header VHDR;
+static image_header HDR;
+
 #define USB_IFACE_NUM 0
 
 static void usb_init_all(secbool usb21_landing) {
@@ -95,8 +99,7 @@ static void usb_init_all(secbool usb21_landing) {
 }
 
 
-secbool bootloader_usb_process(const vendor_header *const vhdr,
-                            const image_header *const hdr) {
+secbool bootloader_usb_process(void) {
   uint8_t buf[USB_PACKET_SIZE];
 
   if (sectrue != usb_webusb_can_read(USB_IFACE_NUM)){
@@ -115,7 +118,7 @@ secbool bootloader_usb_process(const vendor_header *const vhdr,
   }
   switch (msg_id) {
     case 0:  // Initialize
-      process_msg_Initialize(USB_IFACE_NUM, msg_size, buf, vhdr, hdr);
+      process_msg_Initialize(USB_IFACE_NUM, msg_size, buf, &VHDR, &HDR);
       break;
     case 1:  // Ping
       process_msg_Ping(USB_IFACE_NUM, msg_size, buf);
@@ -127,7 +130,7 @@ secbool bootloader_usb_process(const vendor_header *const vhdr,
       int response = ui_user_input(INPUT_CONFIRM | INPUT_CANCEL);
       if (INPUT_CANCEL == response) {
         ui_fadeout();
-        ui_screen_firmware_info(vhdr, hdr);
+        ui_screen_firmware_info(&VHDR, &HDR);
         ui_fadein();
         send_user_abort(USB_IFACE_NUM, "Wipe cancelled");
         break;
@@ -182,7 +185,7 @@ secbool bootloader_usb_process(const vendor_header *const vhdr,
       }
       break;
     case 55:  // GetFeatures
-      process_msg_GetFeatures(USB_IFACE_NUM, msg_size, buf, vhdr, hdr);
+      process_msg_GetFeatures(USB_IFACE_NUM, msg_size, buf, &VHDR, &HDR);
       break;
     default:
       process_msg_unknown(USB_IFACE_NUM, msg_size, buf);
@@ -192,15 +195,12 @@ secbool bootloader_usb_process(const vendor_header *const vhdr,
 }
 
 
-secbool bootloader_usb_loop(const vendor_header *const vhdr,
-                                   const image_header *const hdr) {
-  // if both are NULL, we don't have a firmware installed
-  // let's show a webusb landing page in this case
-  usb_init_all((vhdr == NULL && hdr == NULL) ? sectrue : secfalse);
+secbool bootloader_usb_loop(secbool landing) {
 
+  usb_init_all(landing);
 
   for (;;) {
-    secbool result = bootloader_usb_process(vhdr, hdr);
+    secbool result = bootloader_usb_process();
     if (result != 0xFFFFFFFF){
       return result;
     }
@@ -295,25 +295,23 @@ int main(void) {
   }
 #endif
 
-  vendor_header vhdr;
-  image_header hdr;
   secbool stay_in_bootloader = sectrue;  // flag to stay in bootloader
 
   // detect whether the devices contains a valid firmware
 
   secbool firmware_present =
-      load_vendor_header_keys((const uint8_t *)FIRMWARE_START, &vhdr);
+      load_vendor_header_keys((const uint8_t *)FIRMWARE_START, &VHDR);
   if (sectrue == firmware_present) {
-    firmware_present = check_vendor_header_lock(&vhdr);
+    firmware_present = check_vendor_header_lock(&VHDR);
   }
   if (sectrue == firmware_present) {
     firmware_present = load_image_header(
-        (const uint8_t *)(FIRMWARE_START + vhdr.hdrlen), FIRMWARE_IMAGE_MAGIC,
-        FIRMWARE_IMAGE_MAXSIZE, vhdr.vsig_m, vhdr.vsig_n, vhdr.vpub, &hdr);
+        (const uint8_t *)(FIRMWARE_START + VHDR.hdrlen), FIRMWARE_IMAGE_MAGIC,
+        FIRMWARE_IMAGE_MAXSIZE, VHDR.vsig_m, VHDR.vsig_n, VHDR.vpub, &HDR);
   }
   if (sectrue == firmware_present) {
     firmware_present =
-        check_image_contents(&hdr, IMAGE_HEADER_SIZE + vhdr.hdrlen,
+        check_image_contents(&HDR, IMAGE_HEADER_SIZE + VHDR.hdrlen,
                              FIRMWARE_SECTORS, FIRMWARE_SECTORS_COUNT);
   }
 
@@ -347,20 +345,19 @@ int main(void) {
            NULL);
 
     // and start the usb loop
-    if (bootloader_usb_loop(NULL, NULL) != sectrue) {
+    if (bootloader_usb_loop(sectrue) != sectrue) {
       return 1;
     }
   }
 
   // ... or if user touched the screen on start
   // ... or we have stay_in_bootloader flag to force it
-  if (touched || stay_in_bootloader == sectrue) {
+  if (touched || stay_in_bootloader == secfalse) {
     // no ui_fadeout(); - we already start from black screen
     uint32_t screen = 0;
     usb_init_all(secfalse);
 
     while(true){
-      bool process_usb = true;
       uint32_t usb_result = 0xFFFFFFFF;
       uint32_t ui_result = 0;
 
@@ -372,7 +369,15 @@ int main(void) {
             screen_wipe_confirm();
             ui_fadein();
             screen = 1;
-
+          }
+          if (ui_result == 2) {
+            usb_result = secfalse;
+            //shutdown
+            return 1;
+          }
+          if (ui_result == 3) {
+            usb_result = sectrue;
+            //jump to firmware
           }
           break;
         case 1:
@@ -381,37 +386,34 @@ int main(void) {
           break;
       }
 
-      if (process_usb) {
-        usb_result = bootloader_usb_process(&vhdr, &hdr);
-        if (usb_result != 0xFFFFFFFF) {
-          break;
-        }
+      if (usb_result != 0xFFFFFFFF) {
+        break;
       }
     }
   }
 
-  ensure(load_vendor_header_keys((const uint8_t *)FIRMWARE_START, &vhdr),
+  ensure(load_vendor_header_keys((const uint8_t *)FIRMWARE_START, &VHDR),
          "invalid vendor header");
 
-  ensure(check_vendor_header_lock(&vhdr), "unauthorized vendor keys");
+  ensure(check_vendor_header_lock(&VHDR), "unauthorized vendor keys");
 
-  ensure(load_image_header((const uint8_t *)(FIRMWARE_START + vhdr.hdrlen),
+  ensure(load_image_header((const uint8_t *)(FIRMWARE_START + VHDR.hdrlen),
                            FIRMWARE_IMAGE_MAGIC, FIRMWARE_IMAGE_MAXSIZE,
-                           vhdr.vsig_m, vhdr.vsig_n, vhdr.vpub, &hdr),
+                           VHDR.vsig_m, VHDR.vsig_n, VHDR.vpub, &HDR),
          "invalid firmware header");
 
-  ensure(check_image_contents(&hdr, IMAGE_HEADER_SIZE + vhdr.hdrlen,
+  ensure(check_image_contents(&HDR, IMAGE_HEADER_SIZE + VHDR.hdrlen,
                               FIRMWARE_SECTORS, FIRMWARE_SECTORS_COUNT),
          "invalid firmware hash");
 
   // if all VTRUST flags are unset = ultimate trust => skip the procedure
 
-  if ((vhdr.vtrust & VTRUST_ALL) != VTRUST_ALL) {
+  if ((VHDR.vtrust & VTRUST_ALL) != VTRUST_ALL) {
     // ui_fadeout();  // no fadeout - we start from black screen
-    ui_screen_boot(&vhdr, &hdr);
+    ui_screen_boot(&VHDR, &HDR);
     ui_fadein();
 
-    int delay = (vhdr.vtrust & VTRUST_WAIT) ^ VTRUST_WAIT;
+    int delay = (VHDR.vtrust & VTRUST_WAIT) ^ VTRUST_WAIT;
     if (delay > 1) {
       while (delay > 0) {
         ui_screen_boot_wait(delay);
@@ -422,7 +424,7 @@ int main(void) {
       hal_delay(1000);
     }
 
-    if ((vhdr.vtrust & VTRUST_CLICK) == 0) {
+    if ((VHDR.vtrust & VTRUST_CLICK) == 0) {
       ui_screen_boot_click();
 #if defined TREZOR_MODEL_T
       touch_click();
@@ -451,7 +453,7 @@ int main(void) {
   // jump_to_unprivileged(FIRMWARE_START + vhdr.hdrlen + IMAGE_HEADER_SIZE);
 
   mpu_config_off();
-  jump_to(FIRMWARE_START + vhdr.hdrlen + IMAGE_HEADER_SIZE);
+  jump_to(FIRMWARE_START + VHDR.hdrlen + IMAGE_HEADER_SIZE);
 
   return 0;
 }
