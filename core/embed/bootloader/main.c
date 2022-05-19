@@ -352,7 +352,7 @@ int main(void) {
 
   // ... or if user touched the screen on start
   // ... or we have stay_in_bootloader flag to force it
-  if (touched || stay_in_bootloader == secfalse) {
+  if (touched || stay_in_bootloader == sectrue) {
     // no ui_fadeout(); - we already start from black screen
     uint32_t screen = 0;
     usb_init_all(secfalse);
@@ -366,8 +366,6 @@ int main(void) {
           ui_result = screen_intro();
           if (ui_result == 1){
             ui_fadeout();
-            screen_wipe_confirm();
-            ui_fadein();
             screen = 1;
           }
           if (ui_result == 2) {
@@ -381,6 +379,7 @@ int main(void) {
           }
           break;
         case 1:
+          ui_result = screen_menu();
           break;
         default:
           break;

@@ -8,6 +8,7 @@
 void install_confirm_upgrade(const char * vendor_str, uint8_t vendor_str_len, const char * version_str);
 void screen_wipe_confirm(void);
 uint32_t screen_intro(void);
+uint32_t screen_menu(void);
 
 
 #endif //_RUST_FN_H

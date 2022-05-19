@@ -8,11 +8,10 @@ use super::{
 use crate::{ui::component::text::formatted::FormattedText};
 use crate::ui::component::{Component, Event, EventCtx};
 use cstr_core::CStr;
-use crate::ui::model_tt::component::{BldIntro, BldIntroMsg, ButtonMsg};
+use crate::ui::model_tt::component::{BldIntro, BldIntroMsg, BldMenu};
 use crate::ui::model_tt::theme::{TTBootloaderText};
 use crate::ui::event::TouchEvent;
-use crate::ui::model_tt::component::ButtonMsg::{Clicked, Pressed, Released, LongPressed};
-use crate::trezorhal::io;
+use crate::ui::model_tt::component::ButtonMsg::{Clicked};
 use crate::trezorhal::io::{io_touch_read, io_touch_unpack_x, io_touch_unpack_y, io_usb_process};
 use crate::ui::display;
 
@@ -80,6 +79,13 @@ extern "C" fn screen_wipe_confirm() {
 
 #[no_mangle]
 extern "C" fn screen_menu() {
+    let mut frame = BldMenu::new();
+    frame.place(constant::screen());
+    frame.paint();
+    display::fadein();
+    loop {
+
+    }
 }
 
 

@@ -12,7 +12,7 @@ use super::super::constant::{HEIGHT, WIDTH};
 
 pub const BG_COLOR: Color = Color::rgb(0x00, 0x17, 0xA3);
 pub const FG_COLOR: Color = Color::rgb(0xFF, 0xFF, 0xFF);
-pub const BTN_COLOR: Color =  Color::rgba(BG_COLOR, 0xFF, 0xFF, 0xFF, alpha!(0.33));
+pub const BTN_COLOR: Color =  Color::rgba(BG_COLOR, 0xFF, 0xFF, 0xFF, alpha!(0.22));
 pub const TITLE_COLOR: Color =  Color::rgba(BG_COLOR, 0xFF, 0xFF, 0xFF, alpha!(0.75));
 
 
@@ -46,7 +46,7 @@ pub struct BldIntro {
 
 
 
-pub fn button_cancel() -> ButtonStyleSheet {
+pub fn button_menu() -> ButtonStyleSheet {
     ButtonStyleSheet {
         normal: &ButtonStyle {
             font: FONT_BOLD,
@@ -90,7 +90,7 @@ impl BldIntro
         );
 
         Self {
-            menu: Child::new(Button::with_icon(ICON).styled(button_cancel())),
+            menu: Child::new(Button::with_icon(ICON).styled(button_menu())),
             text1: Child::new(text1),
         }
     }
