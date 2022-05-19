@@ -7,6 +7,7 @@ use crate::{
         geometry::{Insets, Offset, Rect},
     },
 };
+use crate::ui::geometry::Point;
 
 use super::theme;
 
@@ -51,6 +52,10 @@ impl<T> Button<T> {
 
     pub fn with_icon(image: &'static [u8]) -> Self {
         Self::new(ButtonContent::Icon(image))
+    }
+
+    pub fn with_icon_and_text(content: IconText) -> Self {
+        Self::new(ButtonContent::IconAndText(content))
     }
 
     pub fn empty() -> Self {
@@ -197,6 +202,9 @@ impl<T> Button<T> {
                     style.button_color,
                 );
             }
+            ButtonContent::IconAndText(child) => {
+                child.paint(self.area, self.style(), Self::BASELINE_OFFSET);
+            }
         }
     }
 }
@@ -301,6 +309,7 @@ where
             ButtonContent::Empty => {}
             ButtonContent::Text(text) => t.field("text", text),
             ButtonContent::Icon(_) => t.symbol("icon"),
+            ButtonContent::IconAndText(child) => {},
         }
         t.close();
     }
@@ -319,6 +328,7 @@ pub enum ButtonContent<T> {
     Empty,
     Text(T),
     Icon(&'static [u8]),
+    IconAndText(IconText),
 }
 
 #[derive(PartialEq, Eq)]
@@ -364,5 +374,54 @@ impl<T> Button<T> {
                 .with_from_to((0, 1), (0, 2))
                 .map(right_map),
         )
+    }
+}
+
+
+#[derive(PartialEq, Eq)]
+pub struct IconText {
+    text: &'static str,
+    icon: &'static [u8],
+    text_offset: i32,
+    icon_offset: i32,
+}
+
+impl IconText {
+
+    pub fn new(text: &'static str,
+               icon: &'static [u8],
+               text_offset: i32,
+               icon_offset: i32,) -> Self {
+        Self {
+            text,
+            icon,
+            text_offset,
+            icon_offset
+        }
+    }
+
+    pub fn paint(&self, area: Rect, style: &ButtonStyle, baseline_offset: i32) {
+        let width = style.font.text_width(self.text);
+        let height = style.font.text_height();
+        let start_of_baseline = area.center()
+            + Offset::new(-width / 2, height / 2);
+
+        let text_pos = Point::new(area.top_left().x + self.text_offset, start_of_baseline.y);
+        display::text(
+            text_pos,
+            self.text,
+            style.font,
+            style.text_color,
+            style.button_color,
+        );
+
+        let icon_pos = Point::new(area.top_left().x + self.icon_offset, area.center().y);
+
+        display::icon(
+            icon_pos,
+            self.icon,
+            style.text_color,
+            style.button_color,
+        );
     }
 }
