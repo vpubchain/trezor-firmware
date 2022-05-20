@@ -623,31 +623,36 @@ int process_msg_FirmwareUpload(uint8_t iface_num, uint32_t msg_size,
   return (int)firmware_remaining;
 }
 
-int process_msg_WipeDevice(uint8_t iface_num, uint32_t msg_size, uint8_t *buf) {
+
+secbool bootloader_WipeDevice(void) {
   static const uint8_t sectors[] = {
-      FLASH_SECTOR_STORAGE_1,
-      FLASH_SECTOR_STORAGE_2,
-      // 3,  // skip because of MPU protection
-      FLASH_SECTOR_FIRMWARE_START,
-      7,
-      8,
-      9,
-      10,
-      FLASH_SECTOR_FIRMWARE_END,
-      FLASH_SECTOR_UNUSED_START,
-      13,
-      14,
-      // FLASH_SECTOR_UNUSED_END,  // skip because of MPU protection
-      FLASH_SECTOR_FIRMWARE_EXTRA_START,
-      18,
-      19,
-      20,
-      21,
-      22,
-      FLASH_SECTOR_FIRMWARE_EXTRA_END,
+          FLASH_SECTOR_STORAGE_1,
+          FLASH_SECTOR_STORAGE_2,
+          // 3,  // skip because of MPU protection
+          FLASH_SECTOR_FIRMWARE_START,
+          7,
+          8,
+          9,
+          10,
+          FLASH_SECTOR_FIRMWARE_END,
+          FLASH_SECTOR_UNUSED_START,
+          13,
+          14,
+          // FLASH_SECTOR_UNUSED_END,  // skip because of MPU protection
+          FLASH_SECTOR_FIRMWARE_EXTRA_START,
+          18,
+          19,
+          20,
+          21,
+          22,
+          FLASH_SECTOR_FIRMWARE_EXTRA_END,
   };
-  if (sectrue !=
-      flash_erase_sectors(sectors, sizeof(sectors), ui_screen_wipe_progress)) {
+  return flash_erase_sectors(sectors, sizeof(sectors), ui_screen_wipe_progress);
+}
+
+int process_msg_WipeDevice(uint8_t iface_num, uint32_t msg_size, uint8_t *buf) {
+  int wipe_result = bootloader_WipeDevice();
+  if (sectrue != wipe_result) {
     MSG_SEND_INIT(Failure);
     MSG_SEND_ASSIGN_VALUE(code, FailureType_Failure_ProcessError);
     MSG_SEND_ASSIGN_STRING(message, "Could not erase flash");

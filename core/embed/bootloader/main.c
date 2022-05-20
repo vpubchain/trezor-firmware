@@ -295,7 +295,7 @@ int main(void) {
   }
 #endif
 
-  secbool stay_in_bootloader = sectrue;  // flag to stay in bootloader
+  secbool stay_in_bootloader = secfalse;  // flag to stay in bootloader
 
   // detect whether the devices contains a valid firmware
 
@@ -388,6 +388,10 @@ int main(void) {
             ui_fadeout();
             usb_result = sectrue;
           }
+          if (ui_result == 3){
+            ui_fadeout();
+            screen = 2;
+          }
           if (ui_result == 0xBBBBBBBB) {
             usb_result = secfalse;
             //shutdown
@@ -398,12 +402,45 @@ int main(void) {
             //jump to firmware
           }
           break;
+        case 2:
+          ui_result = screen_wipe_confirm();
+          if (ui_result == 1){
+            //canceled
+            screen = 1;
+          }
+          if (ui_result == 2){
+            ui_fadeout();
+            ui_screen_wipe();
+            ui_fadein();
+            int r = bootloader_WipeDevice();
+            if (r != sectrue) {  // error
+              ui_fadeout();
+              ui_screen_fail();
+              ui_fadein();
+              usb_stop();
+              usb_deinit();
+              return 1;
+            } else {            // success
+              ui_fadeout();
+              ui_screen_done(0, sectrue);
+              ui_fadein();
+              usb_stop();
+              usb_deinit();
+              return 1;
+            }
+          }
+          break;
         default:
           break;
       }
 
       if (usb_result != 0xFFFFFFFF) {
-        break;
+        if (usb_result == sectrue){
+          break;
+        }
+        else{
+          return 1;
+        }
       }
     }
   }
