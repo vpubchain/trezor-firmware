@@ -3,10 +3,10 @@ use crate::ui::{component::{Child, Component, Event, EventCtx}, display, geometr
 use crate::ui::component::text::layout::DefaultTextTheme;
 use crate::ui::display::{alpha, Color, Font};
 use crate::ui::geometry::Point;
-use crate::ui::model_tt::component::{ButtonStyle, ButtonStyleSheet};
+use crate::ui::model_tt::component::{BootloaderFrame, ButtonStyle, ButtonStyleSheet};
 use crate::ui::model_tt::component::button::IconText;
-use crate::ui::model_tt::theme::{FONT_BOLD, FONT_MEDIUM, FONT_MONO, FONT_NORMAL, GREY_LIGHT, RED, RED_DARK};
-
+use crate::ui::model_tt::theme::{FONT_BOLD, FONT_MEDIUM, FONT_MONO, FONT_NORMAL, GREY_LIGHT, RED};
+use crate::ui::model_tt::component::ButtonMsg::{Clicked};
 use super::{Button, theme};
 use super::super::constant::{HEIGHT, WIDTH};
 
@@ -14,7 +14,9 @@ use super::super::constant::{HEIGHT, WIDTH};
 pub const BG_COLOR: Color = Color::rgb(0x00, 0x17, 0xA3);
 pub const FG_COLOR: Color = Color::rgb(0xFF, 0xFF, 0xFF);
 pub const BTN_CLOSE_COLOR: Color =  Color::rgba(BG_COLOR, 0xFF, 0xFF, 0xFF, alpha!(0.22));
+pub const BTN_CLOSE_COLOR_ACTIVE: Color =  Color::rgba(BG_COLOR, 0xFF, 0xFF, 0xFF, alpha!(0.11));
 pub const BTN_MENU_COLOR: Color =  Color::rgba(BG_COLOR, 0xFF, 0xFF, 0xFF, alpha!(0.33));
+pub const BTN_MENU_COLOR_ACTIVE: Color =  Color::rgba(BG_COLOR, 0xFF, 0xFF, 0xFF, alpha!(0.11));
 pub const TITLE_COLOR: Color =  Color::rgba(BG_COLOR, 0xFF, 0xFF, 0xFF, alpha!(0.75));
 
 
@@ -67,8 +69,8 @@ pub fn button_cancel() -> ButtonStyleSheet {
         active: &ButtonStyle {
             font: FONT_BOLD,
             text_color: FG_COLOR,
-            button_color: RED_DARK,
-            background_color: FG_COLOR,
+            button_color: BTN_CLOSE_COLOR_ACTIVE,
+            background_color: BG_COLOR,
             border_color: BG_COLOR,
             border_radius: 4,
             border_width: 0,
@@ -100,8 +102,8 @@ pub fn button_menu() -> ButtonStyleSheet {
         active: &ButtonStyle {
             font: FONT_BOLD,
             text_color: FG_COLOR,
-            button_color: RED_DARK,
-            background_color: FG_COLOR,
+            button_color: BTN_MENU_COLOR_ACTIVE,
+            background_color: BG_COLOR,
             border_color: BG_COLOR,
             border_radius: 4,
             border_width: 0,
@@ -138,13 +140,6 @@ impl BldMenu
             fwinfo: Child::new(Button::with_icon_and_text(content_fwinfo).styled(button_menu())),
             reset: Child::new(Button::with_icon_and_text(content_reset).styled(button_menu())),
         }
-    }
-
-    pub fn repaint(&mut self) {
-        self.close.paint();
-        self.reboot.paint();
-        self.fwinfo.paint();
-        self.reset.paint();
     }
 
 }
@@ -185,5 +180,24 @@ impl Component for BldMenu
         self.reboot.bounds(sink);
         self.fwinfo.bounds(sink);
         self.reset.bounds(sink);
+    }
+}
+
+impl BootloaderFrame for BldMenu {
+
+    fn repaint(&mut self) {
+        self.close.paint();
+        self.reboot.paint();
+        self.fwinfo.paint();
+        self.reset.paint();
+    }
+    fn messages(&mut self, msg: <Self as Component>::Msg) -> Option<u32> where Self: Component{
+        let result = match msg {
+            BldMenuMsg::Close(Clicked) => {return Some(1)},
+            BldMenuMsg::Reboot(Clicked) => {return Some(2)},
+            BldMenuMsg::FactoryReset(Clicked) => {return Some(3)},
+            _ => {None}
+        };
+        result
     }
 }

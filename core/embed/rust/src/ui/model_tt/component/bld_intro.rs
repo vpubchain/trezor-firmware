@@ -3,8 +3,9 @@ use crate::ui::component::FormattedText;
 use crate::ui::component::text::layout::DefaultTextTheme;
 use crate::ui::display::{alpha, Color, Font};
 use crate::ui::geometry::Point;
-use crate::ui::model_tt::component::{ButtonStyle, ButtonStyleSheet};
-use crate::ui::model_tt::theme::{FONT_BOLD, FONT_MEDIUM, FONT_MONO, FONT_NORMAL, GREY_LIGHT, RED, RED_DARK};
+use crate::ui::model_tt::component::{BootloaderFrame, ButtonStyle, ButtonStyleSheet};
+use crate::ui::model_tt::theme::{FONT_BOLD, FONT_MEDIUM, FONT_MONO, FONT_NORMAL, GREY_LIGHT, RED};
+use crate::ui::model_tt::component::ButtonMsg::{Clicked};
 
 use super::{Button, theme};
 use super::super::constant::{HEIGHT, WIDTH};
@@ -13,6 +14,7 @@ use super::super::constant::{HEIGHT, WIDTH};
 pub const BG_COLOR: Color = Color::rgb(0x00, 0x17, 0xA3);
 pub const FG_COLOR: Color = Color::rgb(0xFF, 0xFF, 0xFF);
 pub const BTN_COLOR: Color =  Color::rgba(BG_COLOR, 0xFF, 0xFF, 0xFF, alpha!(0.22));
+pub const BTN_COLOR_ACTIVE: Color =  Color::rgba(BG_COLOR, 0xFF, 0xFF, 0xFF, alpha!(0.11));
 pub const TITLE_COLOR: Color =  Color::rgba(BG_COLOR, 0xFF, 0xFF, 0xFF, alpha!(0.75));
 
 
@@ -60,8 +62,8 @@ pub fn button_menu() -> ButtonStyleSheet {
         active: &ButtonStyle {
             font: FONT_BOLD,
             text_color: FG_COLOR,
-            button_color: RED_DARK,
-            background_color: FG_COLOR,
+            button_color: BTN_COLOR_ACTIVE,
+            background_color: BG_COLOR,
             border_color: BG_COLOR,
             border_radius: 4,
             border_width: 0,
@@ -94,12 +96,6 @@ impl BldIntro
             text1: Child::new(text1),
         }
     }
-
-    pub fn repaint(&mut self) {
-        self.text1.paint();
-        self.menu.paint();
-    }
-
 }
 
 
@@ -125,12 +121,26 @@ impl Component for BldIntro
         display::rect_fill(Rect::new (Point::new(0,0), Point::new(WIDTH, HEIGHT)), BG_COLOR);
         display::text_top_left(Point::new(15,24), "BOOTLOADER", theme::FONT_BOLD, TITLE_COLOR, BG_COLOR);
 
-        self.text1.paint();
-        self.menu.paint();
+        self.repaint()
 
     }
 
     fn bounds(&self, sink: &mut dyn FnMut(Rect)) {
         self.menu.bounds(sink);
+    }
+}
+
+impl BootloaderFrame for BldIntro {
+
+    fn repaint(&mut self) {
+        self.text1.paint();
+        self.menu.paint();
+    }
+    fn messages(&mut self, msg: <Self as Component>::Msg) -> Option<u32> where Self: Component{
+        let result = match msg {
+            BldIntroMsg::Menu(Clicked) => {Some(1_u32)}
+            _ => {None}
+        };
+        result
     }
 }

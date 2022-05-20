@@ -1,80 +1,59 @@
 use core::slice;
 use super::{
-    theme, constant,
+    constant,
     component::Install,
-    component::Dialog,
-    component::Button,
 };
 use crate::{ui::component::text::formatted::FormattedText};
 use crate::ui::component::{Component, Event, EventCtx};
 use cstr_core::CStr;
-use crate::error::Error;
-use crate::ui::model_tt::component::{BldIntro, BldIntroMsg, BldMenu, BldMenuMsg};
+use crate::ui::model_tt::component::{BldIntro, BldMenu, BootloaderFrame};
 use crate::ui::model_tt::theme::{TTBootloaderText};
 use crate::ui::event::TouchEvent;
-use crate::ui::model_tt::component::ButtonMsg::{Clicked};
 use crate::trezorhal::io::{io_touch_read, io_touch_unpack_x, io_touch_unpack_y, io_usb_process};
 use crate::ui::display;
 
-#[no_mangle]
-extern "C" fn hello_world(text: *const cty::c_char) {
-    let text = unsafe { CStr::from_ptr(text).to_str().unwrap() };
-    let mut frame = Dialog::new(
-        FormattedText::new::<theme::TTDefaultText>(
-            "Testing text layout, with some text, and some more text. And {param}",
-        )
-            .with("param", text),
-        Button::with_text("Left"),
-        Button::with_text("Right"),
-    );
-    frame.place(constant::screen());
-    frame.paint();
+
+
+pub struct BootloaderLayout<F> {
+    frame: F,
+    usb: bool,
 }
 
+impl<F> BootloaderLayout<F>
+where F: BootloaderFrame+Component {
+    pub fn new(frame: F, usb: bool) -> BootloaderLayout<F> {
+        Self {
+            frame,
+            usb
+        }
+    }
 
+    pub fn process(&mut self) -> u32 {
+        self.frame.place(constant::screen());
+        self.frame.paint();
+        display::fadein();
 
-#[no_mangle]
-extern "C" fn install_confirm_upgrade(vendor_str: *const cty::c_char, vendor_str_len: u8, version: *const cty::c_char) {
-    let ptr = vendor_str as *const u8;
-    let text = unsafe {CStr::from_bytes_with_nul_unchecked(slice::from_raw_parts(ptr, (vendor_str_len as usize)+1)).to_str().unwrap()};
-    let version = unsafe { CStr::from_ptr(version).to_str().unwrap() };
+        loop {
+            let event = touch_eval();
+            if let Some(e) = event {
+                let mut ctx = EventCtx::new();
+                let msg = self.frame.event(&mut ctx, Event::Touch(e));
 
+                if let Some(message) = msg {
+                    self.frame.repaint();
 
-    const ICON: Option<&'static [u8]> = Some(include_res!("model_tt/res/info.toif"));
-    //const ICON: Option<&'static [u8]> = None;
-
-    let mut frame = Install::new(
-        "Firmware update",
-        ICON,
-        FormattedText::new::<TTBootloaderText>(
-            "{text}\n{msg}\n{version}",
-        )   .with("text", "Update firmware by")
-            .with("msg", text)
-            .with("version", version),
-
-    );
-    frame.place(constant::screen());
-    frame.paint();
-
-}
-
-#[no_mangle]
-extern "C" fn screen_wipe_confirm() {
-
-    const ICON: Option<&'static [u8]> = Some(include_res!("model_tt/res/info.toif"));
-    //const ICON: Option<&'static [u8]> = None;
-
-    let mut frame = Install::new(
-        "Wipe device",
-        ICON,
-        FormattedText::new::<TTBootloaderText>(
-            "{text}",
-        ).with("text", "Do you want to wipe the device?")
-    );
-    frame.add_warning("Seed will be erased!");
-    frame.place(constant::screen());
-    frame.paint();
-
+                    let msg = self.frame.messages(message);
+                    if let Some(result) = msg {
+                        return result
+                    }
+                }
+            }
+            if self.usb {
+                let usb = usb_eval();
+                if usb != 0 { return usb };
+            }
+        }
+    }
 }
 
 
@@ -106,52 +85,61 @@ fn usb_eval() -> u32 {
     return 0;
 }
 
+#[no_mangle]
+extern "C" fn install_confirm_upgrade(vendor_str: *const cty::c_char, vendor_str_len: u8, version: *const cty::c_char) -> u32{
+    let ptr = vendor_str as *const u8;
+    let text = unsafe {CStr::from_bytes_with_nul_unchecked(slice::from_raw_parts(ptr, (vendor_str_len as usize)+1)).to_str().unwrap()};
+    let version = unsafe { CStr::from_ptr(version).to_str().unwrap() };
+
+
+    const ICON: Option<&'static [u8]> = Some(include_res!("model_tt/res/info.toif"));
+    //const ICON: Option<&'static [u8]> = None;
+
+    let mut frame = Install::new(
+        "Firmware update",
+        ICON,
+        FormattedText::new::<TTBootloaderText>(
+            "{text}\n{msg}\n{version}",
+        )   .with("text", "Update firmware by")
+            .with("msg", text)
+            .with("version", version),
+
+    );
+    frame.place(constant::screen());
+    frame.paint();
+    return 0;
+
+}
+
+#[no_mangle]
+extern "C" fn screen_wipe_confirm() -> u32 {
+
+    const ICON: Option<&'static [u8]> = Some(include_res!("model_tt/res/info.toif"));
+
+    let mut frame = Install::new(
+        "Wipe device",
+        ICON,
+        FormattedText::new::<TTBootloaderText>(
+            "{text}",
+        ).with("text", "Do you want to wipe the device?")
+    );
+    frame.add_warning("Seed will be erased!");
+
+    let mut layout = BootloaderLayout::new(frame, false);
+    return layout.process();
+}
+
+
 
 #[no_mangle]
 extern "C" fn screen_menu() -> u32 {
-    let mut frame = BldMenu::new();
-    frame.place(constant::screen());
-    frame.paint();
-    display::fadein();
-    loop {
-        let msg = touch_eval();
-        if let Some(e) = event {
-            let mut ctx = EventCtx::new();
-            let msg = frame.event(&mut ctx, Event::Touch(e));
-            frame.repaint();
-            match msg {
-                Some(BldMenuMsg::Close(Clicked)) => return 1,
-                Some(BldMenuMsg::Reboot(Clicked)) => return 2,
-                _ => (),
-            };
-        }
-        let usb = usb_eval();
-        if usb != 0 {return usb};
-    }
+    let mut layout = BootloaderLayout::new(BldMenu::new(), true);
+    return layout.process()
 }
 
 
 #[no_mangle]
 extern "C" fn screen_intro() -> u32 {
-    let mut frame = BldIntro::new();
-    frame.place(constant::screen());
-    frame.paint();
-    display::fadein();
-
-    loop {
-        let event = touch_eval();
-
-        if let Some(e) = event {
-            let mut ctx = EventCtx::new();
-            let msg = frame.event(&mut ctx, Event::Touch(e));
-            frame.repaint();
-            match msg {
-                Some(BldIntroMsg::Menu(Clicked)) => return 1,
-                _ => (),
-            };
-        }
-
-        let usb = usb_eval();
-        if usb != 0 {return usb};
-    }
+    let mut layout = BootloaderLayout::new(BldIntro::new(), true);
+    return layout.process()
 }

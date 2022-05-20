@@ -1,23 +1,26 @@
 use crate::ui::{component::{Child, Component, Event, EventCtx}, display, geometry::{Rect}};
+use crate::ui::component::FormattedText;
 use crate::ui::display::Color;
 use crate::ui::geometry::Point;
-use crate::ui::model_tt::component::{ButtonStyle, ButtonStyleSheet};
+use crate::ui::model_tt::component::{BootloaderFrame, ButtonStyle, ButtonStyleSheet};
 use crate::ui::model_tt::theme::{BG, FG, FONT_BOLD, GREEN, GREEN_DARK, GREY_LIGHT, RADIUS, RED, RED_DARK};
 use super::{theme, Button};
 use super::super::constant::{HEIGHT, WIDTH};
+use crate::ui::model_tt::component::ButtonMsg::{Clicked};
 
-pub enum InstallMsg<L, R>  {
-    Left(L),
-    Right(R),
+
+pub enum InstallMsg<M>  {
+    Cancel(M),
+    Confirm(M),
 }
 
-pub struct Install< M> {
+pub struct Install {
     label: &'static str,
     icon: Option<&'static [u8]>,
-    message: Child<M>,
+    message: Child<FormattedText<&'static str, &'static str>>,
     warning: Option<&'static str>,
-    left: Child<Button<&'static str>>,
-    right: Child<Button<&'static str>>,
+    cancel: Child<Button<&'static str>>,
+    confirm: Child<Button<&'static str>>,
 }
 
 
@@ -88,19 +91,17 @@ pub fn button_confirm() -> ButtonStyleSheet {
 
 
 
-impl<M> Install<M>
-    where
-        M: Component,
+impl Install
 {
-    pub fn new(label: &'static str, icon: Option<&'static [u8]> , message: M) -> Self {
+    pub fn new(label: &'static str, icon: Option<&'static [u8]> , message: FormattedText<&'static str, &'static str>) -> Self {
 
         Self {
             label,
             icon,
             warning: None,
             message: Child::new(message),
-            left: Child::new(Button::with_icon(theme::ICON_CANCEL).styled(button_cancel())),
-            right: Child::new(Button::with_icon(theme::ICON_CONFIRM).styled(button_confirm())),
+            cancel: Child::new(Button::with_icon(theme::ICON_CANCEL).styled(button_cancel())),
+            confirm: Child::new(Button::with_icon(theme::ICON_CONFIRM).styled(button_confirm())),
 
         }
     }
@@ -108,33 +109,25 @@ impl<M> Install<M>
     pub fn add_warning(&mut self, warning: &'static str) {
         self.warning = Option::from(warning);
     }
-
-    pub fn inner(&self) -> &M {
-        self.message.inner()
-    }
 }
 
 
 
-impl<M> Component for Install<M>
-    where
-        M: Component,
+impl Component for Install
 {
 
-    type Msg = InstallMsg<
-        <Button<&'static str> as Component>::Msg,
-        <Button<&'static str> as Component>::Msg>;
+    type Msg = InstallMsg<<Button<&'static str> as Component>::Msg>;
 
     fn place(&mut self, bounds: Rect) -> Rect {
         self.message.place(Rect::new (Point::new(55,52), Point::new(WIDTH-12, HEIGHT-80)));
-        self.left.place(Rect::new (Point::new(9,184), Point::new(117, 234)));
-        self.right.place(Rect::new (Point::new(123,184), Point::new(231, 234)));
+        self.cancel.place(Rect::new (Point::new(9,184), Point::new(117, 234)));
+        self.confirm.place(Rect::new (Point::new(123,184), Point::new(231, 234)));
         bounds
     }
 
     fn event(&mut self, ctx: &mut EventCtx, event: Event) -> Option<Self::Msg> {
-        self.left.event(ctx, event).map(Self::Msg::Left)
-            .or_else(|| self.right.event(ctx, event).map(Self::Msg::Right))
+        self.cancel.event(ctx, event).map(Self::Msg::Cancel)
+            .or_else(|| self.confirm.event(ctx, event).map(Self::Msg::Confirm))
     }
 
     fn paint(&mut self) {
@@ -162,13 +155,32 @@ impl<M> Component for Install<M>
 
         // self.label.paint();
         self.message.paint();
-        self.left.paint();
-        self.right.paint();
+        self.repaint();
 
     }
 
     fn bounds(&self, sink: &mut dyn FnMut(Rect)) {
-        self.left.bounds(sink);
-        self.right.bounds(sink);
+        self.cancel.bounds(sink);
+        self.confirm.bounds(sink);
+    }
+}
+impl BootloaderFrame for Install
+{
+
+    fn repaint(&mut self) {
+        self.cancel.paint();
+        self.confirm.paint();
+    }
+    fn messages(&mut self, msg: <Self as Component>::Msg) -> Option<u32>
+        where
+            Self: Component,
+    {
+
+        let result = match msg {
+            InstallMsg::Cancel(Clicked) => {return Some(1)},
+            InstallMsg::Confirm(Clicked) => {return Some(2)},
+            _ => {None}
+        };
+        result
     }
 }
