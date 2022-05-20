@@ -368,18 +368,35 @@ int main(void) {
             ui_fadeout();
             screen = 1;
           }
-          if (ui_result == 2) {
+          if (ui_result == 0xBBBBBBBB) {
             usb_result = secfalse;
             //shutdown
             return 1;
           }
-          if (ui_result == 3) {
+          if (ui_result == sectrue) {
             usb_result = sectrue;
             //jump to firmware
           }
           break;
         case 1:
           ui_result = screen_menu();
+          if (ui_result == 1){
+            ui_fadeout();
+            screen = 0;
+          }
+          if (ui_result == 2){
+            ui_fadeout();
+            usb_result = sectrue;
+          }
+          if (ui_result == 0xBBBBBBBB) {
+            usb_result = secfalse;
+            //shutdown
+            return 1;
+          }
+          if (ui_result == sectrue) {
+            usb_result = sectrue;
+            //jump to firmware
+          }
           break;
         default:
           break;

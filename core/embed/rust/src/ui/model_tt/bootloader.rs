@@ -8,7 +8,8 @@ use super::{
 use crate::{ui::component::text::formatted::FormattedText};
 use crate::ui::component::{Component, Event, EventCtx};
 use cstr_core::CStr;
-use crate::ui::model_tt::component::{BldIntro, BldIntroMsg, BldMenu};
+use crate::error::Error;
+use crate::ui::model_tt::component::{BldIntro, BldIntroMsg, BldMenu, BldMenuMsg};
 use crate::ui::model_tt::theme::{TTBootloaderText};
 use crate::ui::event::TouchEvent;
 use crate::ui::model_tt::component::ButtonMsg::{Clicked};
@@ -77,14 +78,55 @@ extern "C" fn screen_wipe_confirm() {
 }
 
 
+fn touch_eval() -> Option<TouchEvent> {
+    let event = io_touch_read();
+    if event == 0 {
+        return None
+    }
+    let event_type = event >> 24;
+    let x = io_touch_unpack_x(event) as u32;
+    let y = io_touch_unpack_y(event) as u32;
+    let event = TouchEvent::new(event_type, x, y);
+
+    if let Ok(event) = event {
+        return Some(event)
+    }
+    None
+}
+
+fn usb_eval() -> u32 {
+    let usb_result = io_usb_process();
+
+    if usb_result == 0 {
+        return 0xBBBB_BBBB_u32;
+    }
+    if usb_result == 0xAAAAAAAA_u32 {
+        return 0xAAAA_AAAA_u32;
+    }
+    return 0;
+}
+
+
 #[no_mangle]
-extern "C" fn screen_menu() {
+extern "C" fn screen_menu() -> u32 {
     let mut frame = BldMenu::new();
     frame.place(constant::screen());
     frame.paint();
     display::fadein();
     loop {
-
+        let msg = touch_eval();
+        if let Some(e) = event {
+            let mut ctx = EventCtx::new();
+            let msg = frame.event(&mut ctx, Event::Touch(e));
+            frame.repaint();
+            match msg {
+                Some(BldMenuMsg::Close(Clicked)) => return 1,
+                Some(BldMenuMsg::Reboot(Clicked)) => return 2,
+                _ => (),
+            };
+        }
+        let usb = usb_eval();
+        if usb != 0 {return usb};
     }
 }
 
@@ -97,31 +139,19 @@ extern "C" fn screen_intro() -> u32 {
     display::fadein();
 
     loop {
+        let event = touch_eval();
 
-        let event = io_touch_read();
-        let event_type = event >> 24;
-        let x = io_touch_unpack_x(event) as u32;
-        let y = io_touch_unpack_y(event) as u32;
-
-        if event_type == 1 || event_type == 4 {
-            let event = TouchEvent::new(event_type, x, y);
-            if let Ok(e) = event {
-                let mut ctx =  EventCtx::new();
-                let msg = frame.event(&mut ctx, Event::Touch(e));
-                frame.repaint();
-                if let Some(BldIntroMsg::Menu(Clicked)) = msg {
-                    return 1;
-                }
-            }
+        if let Some(e) = event {
+            let mut ctx = EventCtx::new();
+            let msg = frame.event(&mut ctx, Event::Touch(e));
+            frame.repaint();
+            match msg {
+                Some(BldIntroMsg::Menu(Clicked)) => return 1,
+                _ => (),
+            };
         }
 
-        let usb_result = io_usb_process();
-
-        if usb_result == 0 {
-            return 2;
-        }
-        if usb_result == 0xAAAAAAAA_u32 {
-            return 3;
-        }
+        let usb = usb_eval();
+        if usb != 0 {return usb};
     }
 }

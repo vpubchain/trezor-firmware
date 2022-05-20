@@ -167,6 +167,9 @@ impl Component for BldMenu
 
     fn event(&mut self, ctx: &mut EventCtx, event: Event) -> Option<Self::Msg> {
         self.close.event(ctx, event).map(Self::Msg::Close)
+            .or_else(|| self.reboot.event(ctx, event).map(Self::Msg::Reboot))
+            .or_else(|| self.fwinfo.event(ctx, event).map(Self::Msg::FwInfo))
+            .or_else(|| self.reset.event(ctx, event).map(Self::Msg::FactoryReset))
     }
 
     fn paint(&mut self) {
