@@ -1,3 +1,4 @@
+use crate::alpha;
 use crate::ui::{
     component::{label::LabelStyle, text::layout::DefaultTextTheme},
     display::{Color, Font},
@@ -36,6 +37,17 @@ pub const GREY_LIGHT: Color = Color::rgb(168, 168, 168); // greyish
 pub const GREY_MEDIUM: Color = Color::rgb(100, 100, 100);
 pub const GREY_DARK: Color = Color::rgb(51, 51, 51); // greyer
 
+
+pub const BLD_BG: Color = Color::rgb(0x00, 0x17, 0xA3);
+pub const BLD_FG: Color = WHITE;
+pub const BLD_BTN_MENU_COLOR: Color =  Color::rgba(BLD_BG, 0xFF, 0xFF, 0xFF, alpha!(0.22));
+pub const BLD_BTN_MENU_COLOR_ACTIVE: Color =  Color::rgba(BLD_BG, 0xFF, 0xFF, 0xFF, alpha!(0.11));
+pub const BLD_BTN_MENUITEM_COLOR: Color =  Color::rgba(BLD_BG, 0xFF, 0xFF, 0xFF, alpha!(0.33));
+pub const BLD_BTN_MENUITEM_COLOR_ACTIVE: Color =  Color::rgba(BLD_BG, 0xFF, 0xFF, 0xFF, alpha!(0.11));
+pub const BLD_TITLE_COLOR: Color =  Color::rgba(BLD_BG, 0xFF, 0xFF, 0xFF, alpha!(0.75));
+
+
+
 // Commonly used corner radius (i.e. for buttons).
 pub const RADIUS: u8 = 2;
 
@@ -49,6 +61,13 @@ pub const ICON_SPACE: &[u8] = include_res!("model_tt/res/space.toif");
 pub const ICON_BACK: &[u8] = include_res!("model_tt/res/back.toif");
 pub const ICON_CLICK: &[u8] = include_res!("model_tt/res/click.toif");
 pub const ICON_NEXT: &[u8] = include_res!("model_tt/res/next.toif");
+
+// BLD icons
+pub const CLOSE: &'static [u8] = include_res!("model_tt/res/close.toif");
+pub const RESET: &'static [u8] = include_res!("model_tt/res/reset.toif");
+pub const FWINFO: &'static [u8] = include_res!("model_tt/res/fwinfo.toif");
+pub const REBOOT: &'static [u8] = include_res!("model_tt/res/reboot.toif");
+pub const MENU: &'static [u8] = include_res!("model_tt/res/menu.toif");
 
 // Scrollbar/PIN dots.
 pub const DOT_ACTIVE: &[u8] = include_res!("model_tt/res/scroll-active.toif");
@@ -247,6 +266,74 @@ pub fn button_pin() -> ButtonStyleSheet {
     }
 }
 
+
+pub fn button_bld_menu() -> ButtonStyleSheet {
+    ButtonStyleSheet {
+        normal: &ButtonStyle {
+            font: FONT_BOLD,
+            text_color: BLD_FG,
+            button_color: BLD_BTN_MENU_COLOR,
+            background_color: BLD_BG,
+            border_color: BLD_BG,
+            border_radius: 4,
+            border_width: 0,
+        },
+        active: &ButtonStyle {
+            font: FONT_BOLD,
+            text_color: BLD_FG,
+            button_color: BLD_BTN_MENU_COLOR_ACTIVE,
+            background_color: BLD_BG,
+            border_color: BLD_BG,
+            border_radius: 4,
+            border_width: 0,
+        },
+        disabled: &ButtonStyle {
+            font: FONT_BOLD,
+            text_color: GREY_LIGHT,
+            button_color: BLD_BTN_MENU_COLOR,
+            background_color: BLD_BG,
+            border_color: BLD_BG,
+            border_radius: 4,
+            border_width: 0,
+        },
+    }
+}
+
+
+pub fn button_bld_menu_item() -> ButtonStyleSheet {
+    ButtonStyleSheet {
+        normal: &ButtonStyle {
+            font: FONT_BOLD,
+            text_color: BLD_FG,
+            button_color: BLD_BTN_MENUITEM_COLOR,
+            background_color: BLD_BG,
+            border_color: BLD_BG,
+            border_radius: 4,
+            border_width: 0,
+        },
+        active: &ButtonStyle {
+            font: FONT_BOLD,
+            text_color: BLD_FG,
+            button_color: BLD_BTN_MENUITEM_COLOR_ACTIVE,
+            background_color: BLD_BG,
+            border_color: BLD_BG,
+            border_radius: 4,
+            border_width: 0,
+        },
+        disabled: &ButtonStyle {
+            font: FONT_BOLD,
+            text_color: GREY_LIGHT,
+            button_color: BLD_BTN_MENUITEM_COLOR,
+            background_color: BLD_BG,
+            border_color: BLD_BG,
+            border_radius: 4,
+            border_width: 0,
+        },
+    }
+}
+
+
+
 pub fn button_clear() -> ButtonStyleSheet {
     button_default()
 }
@@ -283,9 +370,10 @@ impl DefaultTextTheme for TTDefaultText {
     const MONO_FONT: Font = FONT_MONO;
 }
 
-pub struct TTBootloaderText;
 
-impl DefaultTextTheme for TTBootloaderText {
+pub struct TTBootloaderTextTemp;
+//because old style confirm screen
+impl DefaultTextTheme for TTBootloaderTextTemp {
     const BACKGROUND_COLOR: Color = FG;
     const TEXT_FONT: Font = FONT_NORMAL;
     const TEXT_COLOR: Color = BG;
@@ -299,6 +387,26 @@ impl DefaultTextTheme for TTBootloaderText {
     const BOLD_FONT: Font = FONT_BOLD;
     const MONO_FONT: Font = FONT_MONO;
 }
+
+pub struct TTBootloaderText;
+impl DefaultTextTheme for TTBootloaderText {
+    const BACKGROUND_COLOR: Color = BLD_BG;
+    const TEXT_FONT: Font = FONT_MEDIUM;
+    const TEXT_COLOR: Color = BLD_FG;
+    const HYPHEN_FONT: Font = FONT_BOLD;
+    const HYPHEN_COLOR: Color = GREY_LIGHT;
+    const ELLIPSIS_FONT: Font = FONT_BOLD;
+    const ELLIPSIS_COLOR: Color = GREY_LIGHT;
+
+    const NORMAL_FONT: Font = FONT_NORMAL;
+    const MEDIUM_FONT: Font = FONT_MEDIUM;
+    const BOLD_FONT: Font = FONT_BOLD;
+    const MONO_FONT: Font = FONT_MONO;
+}
+
+
+
+
 
 pub const CONTENT_BORDER: i32 = 5;
 pub const KEYBOARD_SPACING: i32 = 8;

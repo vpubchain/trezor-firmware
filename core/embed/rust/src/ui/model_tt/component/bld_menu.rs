@@ -1,42 +1,15 @@
 use crate::ui::{component::{Child, Component, Event, EventCtx}, display, geometry::Rect};
-// use crate::ui::component::FormattedText;
-use crate::ui::component::text::layout::DefaultTextTheme;
-use crate::ui::display::{alpha, Color, Font};
 use crate::ui::geometry::Point;
-use crate::ui::model_tt::component::{BootloaderFrame, ButtonStyle, ButtonStyleSheet};
+use crate::ui::model_tt::component::{BootloaderFrame};
 use crate::ui::model_tt::component::button::IconText;
-use crate::ui::model_tt::theme::{FONT_BOLD, FONT_MEDIUM, FONT_MONO, FONT_NORMAL, GREY_LIGHT, RED};
+use crate::ui::model_tt::theme::{BLD_BG, button_bld_menu, button_bld_menu_item, BLD_TITLE_COLOR, REBOOT, FWINFO, RESET, CLOSE};
 use crate::ui::model_tt::component::ButtonMsg::{Clicked};
 use super::{Button, theme};
 use super::super::constant::{HEIGHT, WIDTH};
 
 
-pub const BG_COLOR: Color = Color::rgb(0x00, 0x17, 0xA3);
-pub const FG_COLOR: Color = Color::rgb(0xFF, 0xFF, 0xFF);
-pub const BTN_CLOSE_COLOR: Color =  Color::rgba(BG_COLOR, 0xFF, 0xFF, 0xFF, alpha!(0.22));
-pub const BTN_CLOSE_COLOR_ACTIVE: Color =  Color::rgba(BG_COLOR, 0xFF, 0xFF, 0xFF, alpha!(0.11));
-pub const BTN_MENU_COLOR: Color =  Color::rgba(BG_COLOR, 0xFF, 0xFF, 0xFF, alpha!(0.33));
-pub const BTN_MENU_COLOR_ACTIVE: Color =  Color::rgba(BG_COLOR, 0xFF, 0xFF, 0xFF, alpha!(0.11));
-pub const TITLE_COLOR: Color =  Color::rgba(BG_COLOR, 0xFF, 0xFF, 0xFF, alpha!(0.75));
-
-
 
 pub struct TTBootloaderText2;
-
-impl DefaultTextTheme for TTBootloaderText2 {
-    const BACKGROUND_COLOR: Color = BG_COLOR;
-    const TEXT_FONT: Font = FONT_MEDIUM;
-    const TEXT_COLOR: Color = FG_COLOR;
-    const HYPHEN_FONT: Font = FONT_BOLD;
-    const HYPHEN_COLOR: Color = GREY_LIGHT;
-    const ELLIPSIS_FONT: Font = FONT_BOLD;
-    const ELLIPSIS_COLOR: Color = GREY_LIGHT;
-
-    const NORMAL_FONT: Font = FONT_NORMAL;
-    const MEDIUM_FONT: Font = FONT_MEDIUM;
-    const BOLD_FONT: Font = FONT_BOLD;
-    const MONO_FONT: Font = FONT_MONO;
-}
 
 
 pub enum BldMenuMsg<M>  {
@@ -55,93 +28,21 @@ pub struct BldMenu {
 
 
 
-pub fn button_cancel() -> ButtonStyleSheet {
-    ButtonStyleSheet {
-        normal: &ButtonStyle {
-            font: FONT_BOLD,
-            text_color: FG_COLOR,
-            button_color: BTN_CLOSE_COLOR,
-            background_color: BG_COLOR,
-            border_color: BG_COLOR,
-            border_radius: 4,
-            border_width: 0,
-        },
-        active: &ButtonStyle {
-            font: FONT_BOLD,
-            text_color: FG_COLOR,
-            button_color: BTN_CLOSE_COLOR_ACTIVE,
-            background_color: BG_COLOR,
-            border_color: BG_COLOR,
-            border_radius: 4,
-            border_width: 0,
-        },
-        disabled: &ButtonStyle {
-            font: FONT_BOLD,
-            text_color: GREY_LIGHT,
-            button_color: RED,
-            background_color: BG_COLOR,
-            border_color: FG_COLOR,
-            border_radius: 4,
-            border_width: 0,
-        },
-    }
-}
-
-
-pub fn button_menu() -> ButtonStyleSheet {
-    ButtonStyleSheet {
-        normal: &ButtonStyle {
-            font: FONT_BOLD,
-            text_color: FG_COLOR,
-            button_color: BTN_MENU_COLOR,
-            background_color: BG_COLOR,
-            border_color: BG_COLOR,
-            border_radius: 4,
-            border_width: 0,
-        },
-        active: &ButtonStyle {
-            font: FONT_BOLD,
-            text_color: FG_COLOR,
-            button_color: BTN_MENU_COLOR_ACTIVE,
-            background_color: BG_COLOR,
-            border_color: BG_COLOR,
-            border_radius: 4,
-            border_width: 0,
-        },
-        disabled: &ButtonStyle {
-            font: FONT_BOLD,
-            text_color: GREY_LIGHT,
-            button_color: RED,
-            background_color: BG_COLOR,
-            border_color: FG_COLOR,
-            border_radius: 4,
-            border_width: 0,
-        },
-    }
-}
-
 impl BldMenu
 {
     pub fn new() -> Self {
-
-        const CLOSE: &'static [u8] = include_res!("model_tt/res/close.toif");
-        const RESET: &'static [u8] = include_res!("model_tt/res/reset.toif");
-        const FWINFO: &'static [u8] = include_res!("model_tt/res/fwinfo.toif");
-        const REBOOT: &'static [u8] = include_res!("model_tt/res/reboot.toif");
-
 
         let content_reboot = IconText::new("REBOOT", REBOOT, 46, 25);
         let content_fwinfo = IconText::new("FW INFO", FWINFO, 46, 25);
         let content_reset = IconText::new("FACTORY RESET", RESET, 46, 25);
 
         Self {
-            close: Child::new(Button::with_icon(CLOSE).styled(button_cancel())),
-            reboot: Child::new(Button::with_icon_and_text(content_reboot).styled(button_menu())),
-            fwinfo: Child::new(Button::with_icon_and_text(content_fwinfo).styled(button_menu())),
-            reset: Child::new(Button::with_icon_and_text(content_reset).styled(button_menu())),
+            close: Child::new(Button::with_icon(CLOSE).styled(button_bld_menu())),
+            reboot: Child::new(Button::with_icon_and_text(content_reboot).styled(button_bld_menu_item())),
+            fwinfo: Child::new(Button::with_icon_and_text(content_fwinfo).styled(button_bld_menu_item())),
+            reset: Child::new(Button::with_icon_and_text(content_reset).styled(button_bld_menu_item())),
         }
     }
-
 }
 
 
@@ -168,11 +69,9 @@ impl Component for BldMenu
     }
 
     fn paint(&mut self) {
-        display::rect_fill(Rect::new (Point::new(0,0), Point::new(WIDTH, HEIGHT)), BG_COLOR);
-        display::text_top_left(Point::new(15,24), "BOOTLOADER", theme::FONT_BOLD, TITLE_COLOR, BG_COLOR);
-
+        display::rect_fill(Rect::new (Point::new(0,0), Point::new(WIDTH, HEIGHT)), BLD_BG);
+        display::text_top_left(Point::new(15,24), "BOOTLOADER", theme::FONT_BOLD, BLD_TITLE_COLOR, BLD_BG);
         self.repaint();
-
     }
 
     fn bounds(&self, sink: &mut dyn FnMut(Rect)) {

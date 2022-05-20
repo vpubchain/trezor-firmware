@@ -7,7 +7,7 @@ use crate::{ui::component::text::formatted::FormattedText};
 use crate::ui::component::{Component, Event, EventCtx};
 use cstr_core::CStr;
 use crate::ui::model_tt::component::{BldIntro, BldMenu, BootloaderFrame};
-use crate::ui::model_tt::theme::{TTBootloaderText};
+use crate::ui::model_tt::theme::{TTBootloaderTextTemp};
 use crate::ui::event::TouchEvent;
 use crate::trezorhal::io::{io_touch_read, io_touch_unpack_x, io_touch_unpack_y, io_usb_process};
 use crate::ui::display;
@@ -98,7 +98,7 @@ extern "C" fn install_confirm_upgrade(vendor_str: *const cty::c_char, vendor_str
     let mut frame = Install::new(
         "Firmware update",
         ICON,
-        FormattedText::new::<TTBootloaderText>(
+        FormattedText::new::<TTBootloaderTextTemp>(
             "{text}\n{msg}\n{version}",
         )   .with("text", "Update firmware by")
             .with("msg", text)
@@ -119,7 +119,7 @@ extern "C" fn screen_wipe_confirm() -> u32 {
     let mut frame = Install::new(
         "Wipe device",
         ICON,
-        FormattedText::new::<TTBootloaderText>(
+        FormattedText::new::<TTBootloaderTextTemp>(
             "{text}",
         ).with("text", "Do you want to wipe the device?")
     );

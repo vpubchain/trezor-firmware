@@ -1,40 +1,13 @@
 use crate::ui::{component::{Child, Component, Event, EventCtx}, display, geometry::Rect};
 use crate::ui::component::FormattedText;
-use crate::ui::component::text::layout::DefaultTextTheme;
-use crate::ui::display::{alpha, Color, Font};
 use crate::ui::geometry::Point;
-use crate::ui::model_tt::component::{BootloaderFrame, ButtonStyle, ButtonStyleSheet};
-use crate::ui::model_tt::theme::{FONT_BOLD, FONT_MEDIUM, FONT_MONO, FONT_NORMAL, GREY_LIGHT, RED};
+use crate::ui::model_tt::component::{BootloaderFrame};
+use crate::ui::model_tt::theme::{BLD_BG, BLD_TITLE_COLOR, button_bld_menu, MENU, TTBootloaderText};
 use crate::ui::model_tt::component::ButtonMsg::{Clicked};
 
 use super::{Button, theme};
 use super::super::constant::{HEIGHT, WIDTH};
 
-
-pub const BG_COLOR: Color = Color::rgb(0x00, 0x17, 0xA3);
-pub const FG_COLOR: Color = Color::rgb(0xFF, 0xFF, 0xFF);
-pub const BTN_COLOR: Color =  Color::rgba(BG_COLOR, 0xFF, 0xFF, 0xFF, alpha!(0.22));
-pub const BTN_COLOR_ACTIVE: Color =  Color::rgba(BG_COLOR, 0xFF, 0xFF, 0xFF, alpha!(0.11));
-pub const TITLE_COLOR: Color =  Color::rgba(BG_COLOR, 0xFF, 0xFF, 0xFF, alpha!(0.75));
-
-
-
-pub struct TTBootloaderText2;
-
-impl DefaultTextTheme for TTBootloaderText2 {
-    const BACKGROUND_COLOR: Color = BG_COLOR;
-    const TEXT_FONT: Font = FONT_MEDIUM;
-    const TEXT_COLOR: Color = FG_COLOR;
-    const HYPHEN_FONT: Font = FONT_BOLD;
-    const HYPHEN_COLOR: Color = GREY_LIGHT;
-    const ELLIPSIS_FONT: Font = FONT_BOLD;
-    const ELLIPSIS_COLOR: Color = GREY_LIGHT;
-
-    const NORMAL_FONT: Font = FONT_NORMAL;
-    const MEDIUM_FONT: Font = FONT_MEDIUM;
-    const BOLD_FONT: Font = FONT_BOLD;
-    const MONO_FONT: Font = FONT_MONO;
-}
 
 
 pub enum BldIntroMsg<M>  {
@@ -48,51 +21,17 @@ pub struct BldIntro {
 
 
 
-pub fn button_menu() -> ButtonStyleSheet {
-    ButtonStyleSheet {
-        normal: &ButtonStyle {
-            font: FONT_BOLD,
-            text_color: FG_COLOR,
-            button_color: BTN_COLOR,
-            background_color: BG_COLOR,
-            border_color: BG_COLOR,
-            border_radius: 4,
-            border_width: 0,
-        },
-        active: &ButtonStyle {
-            font: FONT_BOLD,
-            text_color: FG_COLOR,
-            button_color: BTN_COLOR_ACTIVE,
-            background_color: BG_COLOR,
-            border_color: BG_COLOR,
-            border_radius: 4,
-            border_width: 0,
-        },
-        disabled: &ButtonStyle {
-            font: FONT_BOLD,
-            text_color: GREY_LIGHT,
-            button_color: RED,
-            background_color: BG_COLOR,
-            border_color: FG_COLOR,
-            border_radius: 4,
-            border_width: 0,
-        },
-    }
-}
-
 
 impl BldIntro
 {
     pub fn new() -> Self {
 
-        const ICON: &'static [u8] = include_res!("model_tt/res/menu.toif");
-
-        let text1 = FormattedText::new::<TTBootloaderText2>(
+        let text1 = FormattedText::new::<TTBootloaderText>(
             "This is a bootloader. It does something.\n\nFollow instructions in ur PC to do stuff.",
         );
 
         Self {
-            menu: Child::new(Button::with_icon(ICON).styled(button_menu())),
+            menu: Child::new(Button::with_icon(MENU).styled(button_bld_menu())),
             text1: Child::new(text1),
         }
     }
@@ -118,8 +57,8 @@ impl Component for BldIntro
     }
 
     fn paint(&mut self) {
-        display::rect_fill(Rect::new (Point::new(0,0), Point::new(WIDTH, HEIGHT)), BG_COLOR);
-        display::text_top_left(Point::new(15,24), "BOOTLOADER", theme::FONT_BOLD, TITLE_COLOR, BG_COLOR);
+        display::rect_fill(Rect::new (Point::new(0,0), Point::new(WIDTH, HEIGHT)), BLD_BG);
+        display::text_top_left(Point::new(15,24), "BOOTLOADER", theme::FONT_BOLD, BLD_TITLE_COLOR, BLD_BG);
 
         self.repaint()
 
