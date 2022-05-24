@@ -68,6 +68,7 @@ pub const RESET: &'static [u8] = include_res!("model_tt/res/reset.toif");
 pub const FWINFO: &'static [u8] = include_res!("model_tt/res/fwinfo.toif");
 pub const REBOOT: &'static [u8] = include_res!("model_tt/res/reboot.toif");
 pub const MENU: &'static [u8] = include_res!("model_tt/res/menu.toif");
+pub const RECEIVE: &'static [u8] = include_res!("model_tt/res/receive.toif");
 
 // Scrollbar/PIN dots.
 pub const DOT_ACTIVE: &[u8] = include_res!("model_tt/res/scroll-active.toif");
