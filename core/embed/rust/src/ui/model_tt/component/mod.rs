@@ -7,22 +7,9 @@ mod loader;
 mod page;
 mod scroll;
 mod swipe;
-mod install;
-mod wipe;
-mod bld_menu;
-mod bld_intro;
-mod bld;
-mod bld_progress;
-
-pub use button::{Button, ButtonContent, ButtonMsg, ButtonStyle, ButtonStyleSheet};
+pub use button::{Button, ButtonContent, ButtonMsg, ButtonStyle, ButtonStyleSheet, IconText};
 pub use confirm::{HoldToConfirm, HoldToConfirmMsg};
 pub use dialog::{Dialog, DialogLayout, DialogMsg};
-pub use install::{Install, InstallMsg};
-pub use wipe::{Wipe, WipeMsg};
-pub use bld_intro::{BldIntro, BldIntroMsg};
-pub use bld_menu::{BldMenu, BldMenuMsg};
-pub use bld_progress::{BldProgress, BldProgressMsg};
-pub use bld::{BootloaderFrame};
 pub use frame::Frame;
 pub use keyboard::{
     bip39::Bip39Input,

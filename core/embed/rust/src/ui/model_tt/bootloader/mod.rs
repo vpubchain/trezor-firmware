@@ -1,17 +1,23 @@
 use core::slice;
-use super::{
-    constant,
-    component::Install,
-};
-use crate::{ui::component::text::formatted::FormattedText};
+
+use crate::ui::component::text::formatted::FormattedText;
 use crate::ui::component::{Component, Event, EventCtx};
 use cstr_core::CStr;
-use crate::ui::model_tt::component::{BldIntro, BldMenu, BldProgress, BootloaderFrame};
-use crate::ui::model_tt::theme::{TTBootloaderTextTemp};
+use crate::ui::model_tt::theme::TTBootloaderTextTemp;
 use crate::ui::event::TouchEvent;
 use crate::trezorhal::io::{io_touch_read, io_touch_unpack_x, io_touch_unpack_y, io_usb_process};
 use crate::ui::display;
+use crate::ui::model_tt::constant;
 
+pub mod confirm;
+pub mod menu;
+pub mod intro;
+pub mod progress;
+
+use confirm::Install;
+use progress::BldProgress;
+use menu::BldMenu;
+use intro::BldIntro;
 
 
 pub struct BootloaderLayout<F> {
@@ -19,8 +25,14 @@ pub struct BootloaderLayout<F> {
     usb: bool,
 }
 
+
+pub trait ReturnToC {
+    fn return_to_c(&self) -> u32;
+}
+
 impl<F> BootloaderLayout<F>
-where F: BootloaderFrame+Component {
+where F: Component,
+      F::Msg: ReturnToC{
     pub fn new(frame: F, usb: bool) -> BootloaderLayout<F> {
         Self {
             frame,
@@ -39,13 +51,9 @@ where F: BootloaderFrame+Component {
                 let mut ctx = EventCtx::new();
                 let msg = self.frame.event(&mut ctx, Event::Touch(e));
 
+                self.frame.paint();
                 if let Some(message) = msg {
-                    self.frame.repaint();
-
-                    let msg = self.frame.messages(message);
-                    if let Some(result) = msg {
-                        return result
-                    }
+                    return message.return_to_c();
                 }
             }
             if self.usb {
@@ -161,15 +169,10 @@ extern "C" fn screen_intro() -> u32 {
 #[no_mangle]
 extern "C" fn screen_progress(text: *const cty::c_char, progress: u16, initialize: bool) -> u32 {
     let text = unsafe { CStr::from_ptr(text).to_str().unwrap() };
-    let mut frame = BldProgress::new(text);
+    let mut frame = BldProgress::new(text, initialize);
 
-    return if !initialize {
-        frame.set_progres(progress);
-        frame.repaint();
-        0
-    } else {
-        frame.place(constant::screen());
-        frame.paint();
-        0
-    }
+    frame.place(constant::screen());
+    frame.set_progress(progress);
+    frame.paint();
+    0
 }

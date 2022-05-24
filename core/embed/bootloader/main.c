@@ -42,7 +42,7 @@
 #include "messages.h"
 
 
-#include "rust_fn.h"
+#include "api_c.h"
 
 const uint8_t BOOTLOADER_KEY_M = 2;
 const uint8_t BOOTLOADER_KEY_N = 3;

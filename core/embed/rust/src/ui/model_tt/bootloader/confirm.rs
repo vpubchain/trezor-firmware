@@ -1,20 +1,26 @@
 use crate::ui::{component::{Child, Component, Event, EventCtx}, display, geometry::{Rect}};
-use crate::ui::component::FormattedText;
+use crate::ui::component::{FormattedText, Pad};
 use crate::ui::display::Color;
 use crate::ui::geometry::Point;
-use crate::ui::model_tt::component::{BootloaderFrame, ButtonStyle, ButtonStyleSheet};
-use crate::ui::model_tt::theme::{BG, FG, FONT_BOLD, GREEN, GREEN_DARK, GREY_LIGHT, RADIUS, RED, RED_DARK};
-use super::{theme, Button};
-use super::super::constant::{HEIGHT, WIDTH};
+use crate::ui::model_tt::bootloader::ReturnToC;
+use crate::ui::model_tt::component::{Button, ButtonStyle, ButtonStyleSheet};
+use crate::ui::model_tt::theme::{BG, FG, FONT_BOLD, GREEN, GREEN_DARK, GREY_LIGHT, RADIUS, RED, RED_DARK, ICON_CANCEL, ICON_CONFIRM, FONT_NORMAL};
+use crate::ui::model_tt::constant::{HEIGHT, WIDTH};
 use crate::ui::model_tt::component::ButtonMsg::{Clicked};
 
 
-pub enum InstallMsg<M>  {
-    Cancel(M),
-    Confirm(M),
+#[repr(u32)]
+#[derive(Copy, Clone)]
+pub enum InstallMsg  {
+    Cancel = 1,
+    Confirm = 2,
+}
+impl ReturnToC for InstallMsg{
+    fn return_to_c(&self) -> u32 { *self as u32 }
 }
 
 pub struct Install {
+    bg: Pad,
     label: &'static str,
     icon: Option<&'static [u8]>,
     message: Child<FormattedText<&'static str, &'static str>>,
@@ -95,15 +101,18 @@ impl Install
 {
     pub fn new(label: &'static str, icon: Option<&'static [u8]> , message: FormattedText<&'static str, &'static str>) -> Self {
 
-        Self {
+        let mut instance = Self {
+            bg: Pad::with_background(FG),
             label,
             icon,
             warning: None,
             message: Child::new(message),
-            cancel: Child::new(Button::with_icon(theme::ICON_CANCEL).styled(button_cancel())),
-            confirm: Child::new(Button::with_icon(theme::ICON_CONFIRM).styled(button_confirm())),
+            cancel: Child::new(Button::with_icon(ICON_CANCEL).styled(button_cancel())),
+            confirm: Child::new(Button::with_icon(ICON_CONFIRM).styled(button_confirm())),
 
-        }
+        };
+        instance.bg.clear();
+        instance
     }
 
     pub fn add_warning(&mut self, warning: &'static str) {
@@ -115,10 +124,10 @@ impl Install
 
 impl Component for Install
 {
-
-    type Msg = InstallMsg<<Button<&'static str> as Component>::Msg>;
+    type Msg = InstallMsg;
 
     fn place(&mut self, bounds: Rect) -> Rect {
+        self.bg.place(Rect::new (Point::new(0,0), Point::new(WIDTH, HEIGHT)));
         self.message.place(Rect::new (Point::new(55,52), Point::new(WIDTH-12, HEIGHT-80)));
         self.cancel.place(Rect::new (Point::new(9,184), Point::new(117, 234)));
         self.confirm.place(Rect::new (Point::new(123,184), Point::new(231, 234)));
@@ -126,14 +135,15 @@ impl Component for Install
     }
 
     fn event(&mut self, ctx: &mut EventCtx, event: Event) -> Option<Self::Msg> {
-        self.cancel.event(ctx, event).map(Self::Msg::Cancel)
-            .or_else(|| self.confirm.event(ctx, event).map(Self::Msg::Confirm))
+        if let Some(Clicked) = self.cancel.event(ctx, event) { return Some(Self::Msg::Cancel) };
+        if let Some(Clicked) = self.confirm.event(ctx, event) { return Some(Self::Msg::Confirm) };
+        None
     }
 
     fn paint(&mut self) {
-        display::rect_fill(Rect::new (Point::new(0,0), Point::new(WIDTH, HEIGHT)), theme::FG);
-        display::rect_fill(Rect::new (Point::new(16,44), Point::new(WIDTH-12, 45)), theme::BG);
-        display::text(Point::new(16,32), self.label, theme::FONT_NORMAL, theme::BG, theme::FG);
+        self.bg.paint();
+        display::rect_fill(Rect::new (Point::new(16,44), Point::new(WIDTH-12, 45)), BG);
+        display::text(Point::new(16,32), self.label, FONT_NORMAL, BG, FG);
 
 
         match self.icon {
@@ -148,39 +158,19 @@ impl Component for Install
 
         match self.warning {
             Some(warning) => {
-                display::text_center(Point::new(120,170), warning, theme::FONT_NORMAL, Color::rgb(0xFF, 0x00, 0x00), theme::FG);
+                display::text_center(Point::new(120,170), warning, FONT_NORMAL, Color::rgb(0xFF, 0x00, 0x00), FG);
             }
             None => ()
         }
 
-        // self.label.paint();
         self.message.paint();
-        self.repaint();
+        self.cancel.paint();
+        self.confirm.paint();
 
     }
 
     fn bounds(&self, sink: &mut dyn FnMut(Rect)) {
         self.cancel.bounds(sink);
         self.confirm.bounds(sink);
-    }
-}
-impl BootloaderFrame for Install
-{
-
-    fn repaint(&mut self) {
-        self.cancel.paint();
-        self.confirm.paint();
-    }
-    fn messages(&mut self, msg: <Self as Component>::Msg) -> Option<u32>
-        where
-            Self: Component,
-    {
-
-        let result = match msg {
-            InstallMsg::Cancel(Clicked) => {return Some(1)},
-            InstallMsg::Confirm(Clicked) => {return Some(2)},
-            _ => {None}
-        };
-        result
     }
 }

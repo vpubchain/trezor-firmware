@@ -1,9 +1,5 @@
-//
-// Created by mbruna on 3.5.22.
-//
-
-#ifndef _RUST_FN_H
-#define _RUST_FN_H
+#ifndef _API_C_H
+#define _API_C_H
 
 uint32_t screen_install_confirm(
         const char * vendor_str,
@@ -18,4 +14,4 @@ uint32_t screen_intro(void);
 uint32_t screen_menu(void);
 
 
-#endif //_RUST_FN_H
+#endif //_API_C_H

@@ -34,7 +34,7 @@
 #include "mini_printf.h"
 #include "version.h"
 
-#include "rust_fn.h"
+#include "api_c.h"
 
 #if defined TREZOR_MODEL_T
 #include "touch.h"
