@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from trezor import wire
 from trezor.enums import InputScriptType
+from trezor.messages import AuthorizeCoinJoin, SignTx
 
 from apps.common import coininfo
 from apps.common.keychain import get_keychain
@@ -19,13 +20,11 @@ if TYPE_CHECKING:
     from trezor.protobuf import MessageType
 
     from trezor.messages import (
-        AuthorizeCoinJoin,
         GetAddress,
         GetOwnershipId,
         GetOwnershipProof,
         GetPublicKey,
         SignMessage,
-        SignTx,
         VerifyMessage,
     )
 
@@ -66,6 +65,10 @@ PATTERN_BIP49 = "m/49'/coin_type'/account'/change/address_index"
 PATTERN_BIP84 = "m/84'/coin_type'/account'/change/address_index"
 # BIP-86 for taproot: https://github.com/bitcoin/bips/blob/master/bip-0086.mediawiki
 PATTERN_BIP86 = "m/86'/coin_type'/account'/change/address_index"
+# SLIP-25 for CoinJoin: https://github.com/satoshilabs/slips/blob/master/slip-0025.md
+# Only account=0 and script_type=1 are supported for now.
+PATTERN_SLIP25 = "m/10025'/coin_type'/0'/1'/change/address_index"
+PATTERN_SLIP25_EXTERNAL = "m/10025'/coin_type'/0'/1'/0/address_index"
 
 # compatibility patterns, will be removed in the future
 PATTERN_GREENADDRESS_A = "m/[1,4]/address_index"
@@ -151,13 +154,16 @@ def validate_path_against_script_type(
 
     elif coin.taproot and script_type == InputScriptType.SPENDTAPROOT:
         patterns.append(PATTERN_BIP86)
+        patterns.append(PATTERN_SLIP25)
 
     return any(
         PathSchema.parse(pattern, coin.slip44).match(address_n) for pattern in patterns
     )
 
 
-def get_schemas_for_coin(coin: coininfo.CoinInfo) -> Iterable[PathSchema]:
+def get_schemas_for_coin(
+    coin: coininfo.CoinInfo, allow_slip25_internal: bool = False
+) -> Iterable[PathSchema]:
     # basic patterns
     patterns = [
         PATTERN_BIP44,
@@ -205,6 +211,10 @@ def get_schemas_for_coin(coin: coininfo.CoinInfo) -> Iterable[PathSchema]:
     # taproot patterns
     if coin.taproot:
         patterns.append(PATTERN_BIP86)
+        if allow_slip25_internal:
+            patterns.append(PATTERN_SLIP25)
+        else:
+            patterns.append(PATTERN_SLIP25_EXTERNAL)
 
     schemas = [PathSchema.parse(pattern, coin.slip44) for pattern in patterns]
 
@@ -234,10 +244,12 @@ def get_coin_by_name(coin_name: str | None) -> coininfo.CoinInfo:
 
 
 async def get_keychain_for_coin(
-    ctx: wire.Context, coin_name: str | None
+    ctx: wire.Context,
+    coin_name: str | None,
+    allow_slip25_internal: bool = False,
 ) -> tuple[Keychain, coininfo.CoinInfo]:
     coin = get_coin_by_name(coin_name)
-    schemas = get_schemas_for_coin(coin)
+    schemas = get_schemas_for_coin(coin, allow_slip25_internal)
     slip21_namespaces = [[b"SLIP-0019"], [b"SLIP-0024"]]
     keychain = await get_keychain(ctx, coin.curve_name, schemas, slip21_namespaces)
     return keychain, coin
@@ -249,7 +261,13 @@ def with_keychain(func: HandlerWithCoinInfo[MsgOut]) -> Handler[MsgIn, MsgOut]:
         msg: MsgIn,
         auth_msg: MessageType | None = None,
     ) -> MsgOut:
-        keychain, coin = await get_keychain_for_coin(ctx, msg.coin_name)
+        # Allow access to the SLIP25 internal chain (CoinJoin) for SignTx and preauthorized CoinJoin operations.
+        allow_slip25_internal = SignTx.is_type_of(msg) or (
+            auth_msg is not None and AuthorizeCoinJoin.is_type_of(auth_msg)
+        )
+        keychain, coin = await get_keychain_for_coin(
+            ctx, msg.coin_name, allow_slip25_internal
+        )
         if auth_msg:
             auth_obj = authorization.from_cached_message(auth_msg)
             return await func(ctx, msg, keychain, coin, auth_obj)

@@ -2,20 +2,41 @@ from typing import TYPE_CHECKING
 
 from trezor import wire
 from trezor.enums import InputScriptType
-from trezor.messages import HDNodeType, PublicKey
+from trezor.messages import AuthorizeCoinJoin, HDNodeType, PublicKey
+from trezor.ui.layouts import confirm_action
 
 from apps.common import coininfo, paths
 from apps.common.keychain import get_keychain
 
+from . import authorization
+
 if TYPE_CHECKING:
     from trezor.messages import GetPublicKey
 
+_SLIP25_PURPOSE = 10025 | paths.HARDENED
 
-async def get_public_key(ctx: wire.Context, msg: GetPublicKey) -> PublicKey:
+
+async def get_public_key(
+    ctx: wire.Context,
+    msg: GetPublicKey,
+    auth_msg: AuthorizeCoinJoin | None = None,
+) -> PublicKey:
     coin_name = msg.coin_name or "Bitcoin"
     script_type = msg.script_type or InputScriptType.SPENDADDRESS
     coin = coininfo.by_name(coin_name)
     curve_name = msg.ecdsa_curve_name or coin.curve_name
+
+    # Require confirmation to access SLIP25 paths unless already authorized.
+    if auth_msg:
+        if not authorization.from_cached_message(auth_msg).check_get_public_key(msg):
+            raise wire.ProcessError("Unauthorized operation")
+    elif msg.address_n and msg.address_n[0] == _SLIP25_PURPOSE:
+        await confirm_action(
+            ctx,
+            "confirm_coinjoin_xpub",
+            title="CoinJoin XPUB",
+            description="Do you want to allow access to your CoinJoin account?",
+        )
 
     keychain = await get_keychain(ctx, curve_name, [paths.AlwaysMatchingSchema])
 

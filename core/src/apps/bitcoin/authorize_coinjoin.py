@@ -2,17 +2,17 @@ from micropython import const
 from typing import TYPE_CHECKING
 
 from trezor import ui, wire
-from trezor.enums import ButtonRequestType
+from trezor.enums import ButtonRequestType, InputScriptType
 from trezor.messages import AuthorizeCoinJoin, Success
 from trezor.strings import format_amount
 from trezor.ui.layouts import confirm_action, confirm_coinjoin, confirm_metadata
 
 from apps.common import authorization, safety_checks
-from apps.common.paths import validate_path
+from apps.common.paths import PathSchema, validate_path
 
 from .authorization import FEE_RATE_DECIMALS
 from .common import BIP32_WALLET_DEPTH
-from .keychain import validate_path_against_script_type, with_keychain
+from .keychain import PATTERN_SLIP25, with_keychain
 
 if TYPE_CHECKING:
     from apps.common.coininfo import CoinInfo
@@ -47,6 +47,13 @@ async def authorize_coinjoin(
     if not msg.address_n:
         raise wire.DataError("Empty path not allowed.")
 
+    validation_path = msg.address_n + [0] * BIP32_WALLET_DEPTH
+    if (
+        not PathSchema.parse(PATTERN_SLIP25, coin.slip44).match(validation_path)
+        or msg.script_type != InputScriptType.SPENDTAPROOT
+    ) and safety_checks.is_strict():
+        raise wire.DataError("Forbidden path.")
+
     await confirm_action(
         ctx,
         "coinjoin_coordinator",
@@ -60,14 +67,12 @@ async def authorize_coinjoin(
     max_fee_per_vbyte = format_amount(msg.max_fee_per_kvbyte, 3)
     await confirm_coinjoin(ctx, coin.coin_name, msg.max_rounds, max_fee_per_vbyte)
 
-    validation_path = msg.address_n + [0] * BIP32_WALLET_DEPTH
     await validate_path(
         ctx,
         keychain,
         validation_path,
-        validate_path_against_script_type(
-            coin, address_n=validation_path, script_type=msg.script_type
-        ),
+        PathSchema.parse(PATTERN_SLIP25, coin.slip44).match(validation_path),
+        msg.script_type == InputScriptType.SPENDTAPROOT,
     )
 
     if msg.max_fee_per_kvbyte > coin.maxfee_kb:

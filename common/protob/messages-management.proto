@@ -441,6 +441,7 @@ message DoPreauthorized {
  * @start
  * @next SignTx
  * @next GetOwnershipProof
+ * @next GetPublicKey
  */
 message PreauthorizedRequest {
 }
