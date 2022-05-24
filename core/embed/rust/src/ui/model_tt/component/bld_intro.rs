@@ -9,17 +9,15 @@ use super::{Button, theme};
 use super::super::constant::{HEIGHT, WIDTH};
 
 
-
 pub enum BldIntroMsg<M>  {
     Menu(M),
 }
+
 
 pub struct BldIntro {
     menu: Child<Button<&'static str>>,
     text1: Child<FormattedText<&'static str, &'static str>>,
 }
-
-
 
 
 impl BldIntro
@@ -36,7 +34,6 @@ impl BldIntro
         }
     }
 }
-
 
 
 impl Component for BldIntro
@@ -68,6 +65,7 @@ impl Component for BldIntro
         self.menu.bounds(sink);
     }
 }
+
 
 impl BootloaderFrame for BldIntro {
 

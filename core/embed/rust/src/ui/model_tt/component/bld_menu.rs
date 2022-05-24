@@ -8,10 +8,6 @@ use super::{Button, theme};
 use super::super::constant::{HEIGHT, WIDTH};
 
 
-
-pub struct TTBootloaderText2;
-
-
 pub enum BldMenuMsg<M>  {
     Close(M),
     Reboot(M),
@@ -19,13 +15,13 @@ pub enum BldMenuMsg<M>  {
     FactoryReset(M),
 }
 
+
 pub struct BldMenu {
     close: Child<Button<&'static str>>,
     reboot: Child<Button<&'static str>>,
     fwinfo: Child<Button<&'static str>>,
     reset: Child<Button<&'static str>>,
 }
-
 
 
 impl BldMenu
@@ -44,7 +40,6 @@ impl BldMenu
         }
     }
 }
-
 
 
 impl Component for BldMenu
@@ -81,6 +76,7 @@ impl Component for BldMenu
         self.reset.bounds(sink);
     }
 }
+
 
 impl BootloaderFrame for BldMenu {
 
