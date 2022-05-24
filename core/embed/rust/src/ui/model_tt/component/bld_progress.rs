@@ -24,7 +24,7 @@ impl BldProgress
         Self {
             text,
             icon: RECEIVE,
-            progress: 200
+            progress: 0
         }
     }
 
@@ -64,7 +64,7 @@ impl BootloaderFrame for BldProgress {
     fn repaint(&mut self) {
         display::loader(
             self.progress,
-            0,
+            -20,
             BLD_FG,
             BLD_BG,
             Some((self.icon, BLD_FG)),

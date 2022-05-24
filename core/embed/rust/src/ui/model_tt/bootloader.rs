@@ -6,7 +6,7 @@ use super::{
 use crate::{ui::component::text::formatted::FormattedText};
 use crate::ui::component::{Component, Event, EventCtx};
 use cstr_core::CStr;
-use crate::ui::model_tt::component::{BldIntro, BldMenu, BootloaderFrame};
+use crate::ui::model_tt::component::{BldIntro, BldMenu, BldProgress, BootloaderFrame};
 use crate::ui::model_tt::theme::{TTBootloaderTextTemp};
 use crate::ui::event::TouchEvent;
 use crate::trezorhal::io::{io_touch_read, io_touch_unpack_x, io_touch_unpack_y, io_usb_process};
@@ -86,28 +86,42 @@ fn usb_eval() -> u32 {
 }
 
 #[no_mangle]
-extern "C" fn install_confirm_upgrade(vendor_str: *const cty::c_char, vendor_str_len: u8, version: *const cty::c_char) -> u32{
+extern "C" fn screen_install_confirm(
+    vendor_str: *const cty::c_char,
+    vendor_str_len: u8,
+    version: *const cty::c_char,
+    downgrade: bool,
+    vendor: bool,
+) -> u32{
     let ptr = vendor_str as *const u8;
     let text = unsafe {CStr::from_bytes_with_nul_unchecked(slice::from_raw_parts(ptr, (vendor_str_len as usize)+1)).to_str().unwrap()};
     let version = unsafe { CStr::from_ptr(version).to_str().unwrap() };
 
-
     const ICON: Option<&'static [u8]> = Some(include_res!("model_tt/res/info.toif"));
     //const ICON: Option<&'static [u8]> = None;
 
+    let title =
+        if downgrade {"Downgrade firmware"}
+        else if vendor {"Vendor change"}
+        else {"Update firmware"};
+
     let mut frame = Install::new(
-        "Firmware update",
+        title,
         ICON,
         FormattedText::new::<TTBootloaderTextTemp>(
             "{text}\n{msg}\n{version}",
-        )   .with("text", "Update firmware by")
+        )   .with("text", "Install firmware by")
             .with("msg", text)
             .with("version", version),
 
     );
-    frame.place(constant::screen());
-    frame.paint();
-    return 0;
+
+    if vendor || downgrade {
+        frame.add_warning("Seed will be erased!");
+    }
+
+    let mut layout = BootloaderLayout::new(frame, false);
+    return layout.process();
 
 }
 
@@ -142,4 +156,20 @@ extern "C" fn screen_menu() -> u32 {
 extern "C" fn screen_intro() -> u32 {
     let mut layout = BootloaderLayout::new(BldIntro::new(), true);
     return layout.process()
+}
+
+#[no_mangle]
+extern "C" fn screen_progress(text: *const cty::c_char, progress: u16, initialize: bool) -> u32 {
+    let text = unsafe { CStr::from_ptr(text).to_str().unwrap() };
+    let mut frame = BldProgress::new(text);
+
+    return if !initialize {
+        frame.set_progres(progress);
+        frame.repaint();
+        0
+    } else {
+        frame.place(constant::screen());
+        frame.paint();
+        0
+    }
 }

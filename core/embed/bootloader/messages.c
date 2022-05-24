@@ -505,23 +505,19 @@ int process_msg_FirmwareUpload(uint8_t iface_num, uint32_t msg_size,
       detect_installation(&current_vhdr, &current_hdr, &vhdr, &hdr, &is_new,
                           &is_upgrade, &is_downgrade_wipe);
 
-      int response = INPUT_CANCEL;
+      uint32_t response = INPUT_CANCEL;
       if (sectrue == is_new) {
         // new installation - auto confirm
         response = INPUT_CONFIRM;
       } else if (sectrue == is_upgrade) {
         // firmware upgrade
         ui_fadeout();
-        ui_screen_install_confirm_upgrade(&vhdr, &hdr);
-        ui_fadein();
-        response = ui_user_input(INPUT_CONFIRM | INPUT_CANCEL);
+        response = ui_screen_install_confirm_upgrade(&vhdr, &hdr);
       } else {
         // downgrade with wipe or new firmware vendor
         ui_fadeout();
-        ui_screen_install_confirm_newvendor_or_downgrade_wipe(
+        response = ui_screen_install_confirm_newvendor_or_downgrade_wipe(
             &vhdr, &hdr, is_downgrade_wipe);
-        ui_fadein();
-        response = ui_user_input(INPUT_CONFIRM | INPUT_CANCEL);
       }
 
       if (INPUT_CANCEL == response) {

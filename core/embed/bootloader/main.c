@@ -125,9 +125,7 @@ secbool bootloader_usb_process(void) {
       break;
     case 5:  // WipeDevice
       ui_fadeout();
-      ui_screen_wipe_confirm();
-      ui_fadein();
-      int response = ui_user_input(INPUT_CONFIRM | INPUT_CANCEL);
+      uint32_t response = ui_screen_wipe_confirm();
       if (INPUT_CANCEL == response) {
         ui_fadeout();
         ui_screen_firmware_info(&VHDR, &HDR);
