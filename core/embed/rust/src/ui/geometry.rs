@@ -29,7 +29,7 @@ const fn clamp(x: i32, min: i32, max: i32) -> i32 {
 /// Relative offset in 2D space, used for representing translation and
 /// dimensions of objects. Absolute positions on the screen are represented by
 /// the `Point` type.
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct Offset {
     pub x: i32,
     pub y: i32,
