@@ -1,4 +1,5 @@
 use crate::ui::{component::{Child, Component, Event, EventCtx}, display, geometry::{Rect}};
+use crate::ui::component::FormattedText;
 use crate::ui::display::Color;
 use crate::ui::geometry::Point;
 use crate::ui::model_tt::component::{BootloaderFrame, ButtonStyle, ButtonStyleSheet};
@@ -13,10 +14,10 @@ pub enum InstallMsg<M>  {
     Confirm(M),
 }
 
-pub struct Install<T> {
+pub struct Install {
     label: &'static str,
     icon: Option<&'static [u8]>,
-    message: Child<T>,
+    message: Child<FormattedText<&'static str, &'static str>>,
     warning: Option<&'static str>,
     cancel: Child<Button<&'static str>>,
     confirm: Child<Button<&'static str>>,
@@ -90,10 +91,9 @@ pub fn button_confirm() -> ButtonStyleSheet {
 
 
 
-impl<T> Install<T>
-where T: Component
+impl Install
 {
-    pub fn new(label: &'static str, icon: Option<&'static [u8]> , message: T) -> Self {
+    pub fn new(label: &'static str, icon: Option<&'static [u8]> , message: FormattedText<&'static str, &'static str>) -> Self {
 
         Self {
             label,
@@ -113,8 +113,7 @@ where T: Component
 
 
 
-impl<T> Component for Install<T>
-    where T: Component
+impl Component for Install
 {
 
     type Msg = InstallMsg<<Button<&'static str> as Component>::Msg>;
@@ -165,8 +164,7 @@ impl<T> Component for Install<T>
         self.confirm.bounds(sink);
     }
 }
-impl<T> BootloaderFrame for Install<T>
-where T: Component
+impl BootloaderFrame for Install
 {
 
     fn repaint(&mut self) {
