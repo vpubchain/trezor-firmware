@@ -114,7 +114,13 @@ def get_public_node(
     coin_name: Optional[str] = None,
     script_type: messages.InputScriptType = messages.InputScriptType.SPENDADDRESS,
     ignore_xpub_magic: bool = False,
+    preauthorized: bool = False,
 ) -> "MessageType":
+    if preauthorized:
+        res = client.call(messages.DoPreauthorized())
+        if not isinstance(res, messages.PreauthorizedRequest):
+            raise exceptions.TrezorException("Unexpected message")
+
     return client.call(
         messages.GetPublicKey(
             address_n=n,
