@@ -12,6 +12,7 @@ uint32_t screen_wipe_confirm(void);
 uint32_t screen_progress(const char * text, uint16_t progress, bool initialize);
 uint32_t screen_intro(void);
 uint32_t screen_menu(void);
+uint32_t screen_connect(void);
 
 
 #endif //_API_C_H

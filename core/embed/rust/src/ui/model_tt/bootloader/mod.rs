@@ -13,6 +13,7 @@ pub mod menu;
 pub mod intro;
 pub mod progress;
 mod theme;
+mod connect;
 
 use confirm::Install;
 use progress::BldProgress;
@@ -20,6 +21,7 @@ use menu::BldMenu;
 use intro::BldIntro;
 use crate::ui::component::text::paragraphs::Paragraphs;
 use crate::ui::geometry::LinearPlacement;
+use crate::ui::model_tt::bootloader::connect::Connect;
 use crate::ui::model_tt::theme::FONT_NORMAL;
 
 
@@ -164,6 +166,26 @@ extern "C" fn screen_progress(text: *const cty::c_char, progress: u16, initializ
 
     frame.place(constant::screen());
     frame.set_progress(progress);
+    frame.paint();
+    0
+}
+
+#[no_mangle]
+extern "C" fn screen_connect() -> u32 {
+    let mut frame = Connect::new("Waiting for host");
+
+    frame.place(constant::screen());
+    frame.paint();
+    0
+}
+
+
+
+#[no_mangle]
+extern "C" fn screen_connected() -> u32 {
+    let mut frame = Connect::new("Connected to host");
+
+    frame.place(constant::screen());
     frame.paint();
     0
 }

@@ -32,6 +32,7 @@
 #include "version.h"
 
 #include "bootui.h"
+#include "api_c.h"
 #include "messages.h"
 
 #include "memzero.h"
@@ -522,7 +523,7 @@ int process_msg_FirmwareUpload(uint8_t iface_num, uint32_t msg_size,
 
       if (INPUT_CANCEL == response) {
         ui_fadeout();
-        ui_screen_firmware_info(&current_vhdr, &current_hdr);
+        screen_connect();
         ui_fadein();
         send_user_abort(iface_num, "Firmware install cancelled");
         return -4;
