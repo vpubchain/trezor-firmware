@@ -4,6 +4,7 @@ use crate::ui::geometry::Point;
 use crate::ui::model_tt::bootloader::ReturnToC;
 use crate::ui::model_tt::theme::{FONT_BOLD};
 use crate::ui::model_tt::bootloader::theme::{BLD_BG, button_bld_menu, button_bld_menu_item, BLD_TITLE_COLOR, REBOOT, FWINFO, RESET, CLOSE};
+use crate::ui::model_tt::bootloader::title::Title;
 use crate::ui::model_tt::component::ButtonMsg::{Clicked};
 use crate::ui::model_tt::component::{Button, IconText};
 use crate::ui::model_tt::constant::{HEIGHT, WIDTH};
@@ -23,6 +24,7 @@ impl ReturnToC for MenuMsg {
 
 pub struct Menu {
     bg: Pad,
+    title: Child<Title>,
     close: Child<Button<&'static str>>,
     reboot: Child<Button<&'static str>>,
     fwinfo: Child<Button<&'static str>>,
@@ -32,7 +34,7 @@ pub struct Menu {
 
 impl Menu
 {
-    pub fn new() -> Self {
+    pub fn new(bld_version: &'static str) -> Self {
 
         let content_reboot = IconText::new("REBOOT", REBOOT, 46, 25);
         let content_fwinfo = IconText::new("FW INFO", FWINFO, 46, 25);
@@ -40,6 +42,7 @@ impl Menu
 
         let mut instance = Self {
             bg: Pad::with_background(BLD_BG),
+            title: Child::new(Title::new(bld_version)),
             close: Child::new(Button::with_icon(CLOSE).styled(button_bld_menu())),
             reboot: Child::new(Button::with_icon_and_text(content_reboot).styled(button_bld_menu_item())),
             fwinfo: Child::new(Button::with_icon_and_text(content_fwinfo).styled(button_bld_menu_item())),
@@ -58,6 +61,7 @@ impl Component for Menu
 
     fn place(&mut self, bounds: Rect) -> Rect {
         self.bg.place(Rect::new (Point::new(0,0), Point::new(WIDTH, HEIGHT)));
+        self.title.place(Rect::new (Point::new(15,24), Point::new(180, 40)));
         self.close.place(Rect::new (Point::new(187,15), Point::new( 187+38,15+38)));
         self.reboot.place(Rect::new (Point::new(16,66), Point::new( 16+209,66+48)));
         self.fwinfo.place(Rect::new (Point::new(16,122), Point::new( 16+209,122+48)));
@@ -76,7 +80,7 @@ impl Component for Menu
 
     fn paint(&mut self) {
         self.bg.paint();
-        display::text_top_left(Point::new(15,24), "BOOTLOADER", FONT_BOLD, BLD_TITLE_COLOR, BLD_BG);
+        self.title.paint();
         self.close.paint();
         self.reboot.paint();
         self.fwinfo.paint();

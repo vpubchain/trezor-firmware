@@ -14,6 +14,7 @@ pub mod intro;
 pub mod progress;
 mod theme;
 mod connect;
+mod title;
 
 use confirm::Confirm;
 use progress::Progress;
@@ -147,8 +148,11 @@ extern "C" fn screen_wipe_confirm() -> u32 {
 
 
 #[no_mangle]
-extern "C" fn screen_menu() -> u32 {
-    let mut layout = BootloaderLayout::new(Menu::new());
+extern "C" fn screen_menu(bld_version: *const cty::c_char) -> u32 {
+
+    let bld_version = unsafe { CStr::from_ptr(bld_version).to_str().unwrap() };
+
+    let mut layout = BootloaderLayout::new(Menu::new(bld_version));
     return layout.process()
 }
 

@@ -362,7 +362,7 @@ int main(void) {
           }
           break;
         case 1:
-          ui_result = screen_menu();
+          ui_result = ui_screen_menu();
           if (ui_result == 1){
             ui_fadeout();
             screen = 0;

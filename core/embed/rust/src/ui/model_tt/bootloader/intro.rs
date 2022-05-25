@@ -1,10 +1,11 @@
-use crate::ui::{component::{Child, Component, Event, EventCtx}, display, geometry::Rect};
+use crate::ui::{component::{Child, Component, Event, EventCtx}, geometry::Rect};
 use crate::ui::component::{Pad};
 use crate::ui::component::text::paragraphs::{Paragraphs};
 use crate::ui::geometry::{LinearPlacement, Point};
 use crate::ui::model_tt::bootloader::ReturnToC;
-use crate::ui::model_tt::theme::{FONT_BOLD, FONT_MEDIUM};
-use crate::ui::model_tt::bootloader::theme::{BLD_BG, BLD_TITLE_COLOR, button_bld_menu, MENU, TTBootloaderText, button_bld_menu_item};
+use crate::ui::model_tt::theme::{FONT_MEDIUM};
+use crate::ui::model_tt::bootloader::theme::{BLD_BG, button_bld_menu, MENU, TTBootloaderText, button_bld_menu_item};
+use crate::ui::model_tt::bootloader::title::Title;
 use crate::ui::model_tt::component::{ButtonMsg::{Clicked}};
 
 use crate::ui::model_tt::component::{Button};
@@ -23,7 +24,7 @@ impl ReturnToC for IntroMsg {
 
 pub struct Intro {
     bg: Pad,
-    bld_version: &'static str,
+    title: Child<Title>,
     menu: Child<Button<&'static str>>,
     host: Child<Button<&'static str>>,
     text: Child<Paragraphs<&'static str>>,
@@ -43,7 +44,7 @@ impl Intro
 
         let mut instance = Self {            
             bg: Pad::with_background(BLD_BG),
-            bld_version,
+            title: Child::new(Title::new(bld_version)),
             menu: Child::new(Button::with_icon(MENU).styled(button_bld_menu())),
             host: Child::new(Button::with_text("Connect to host").styled(button_bld_menu_item())),
             text: Child::new(p1),
@@ -62,6 +63,7 @@ impl Component for Intro
 
     fn place(&mut self, bounds: Rect) -> Rect {
         self.bg.place(Rect::new (Point::new(0,0), Point::new(WIDTH, HEIGHT)));
+        self.title.place(Rect::new (Point::new(15,24), Point::new(180, 40)));
         self.menu.place(Rect::new (Point::new(187,15), Point::new(187+38, 15+38)));
         self.host.place(Rect::new (Point::new(16,178), Point::new( 16+209,178+48)));
         self.text.place(Rect::new (Point::new(15,75), Point::new(225, 200)));
@@ -75,9 +77,8 @@ impl Component for Intro
     }
 
     fn paint(&mut self) {
-        self.bg.paint();            
-        display::text_top_left(Point::new(15,24), "BOOTLOADER", FONT_BOLD, BLD_TITLE_COLOR, BLD_BG);
-        display::text_top_left(Point::new(130,24), self.bld_version, FONT_BOLD, BLD_TITLE_COLOR, BLD_BG);
+        self.bg.paint();
+        self.title.paint();
         self.text.paint();
         self.host.paint();
         self.menu.paint();

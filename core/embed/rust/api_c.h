@@ -14,7 +14,7 @@ uint32_t screen_intro(const char * bld_version_str,
                       const char * vendor_str,
                       uint8_t vendor_str_len,
                       const char * version_str);
-uint32_t screen_menu(void);
+uint32_t screen_menu(const char * bld_version_str);
 uint32_t screen_connect(void);
 
 
