@@ -67,12 +67,16 @@
 // common shared functions
 
 
+static void format_ver_bfr(const char *format, uint32_t version, char * bfr, size_t bfr_len){
+  mini_snprintf(bfr, bfr_len, format, (int)(version & 0xFF),
+                (int)((version >> 8) & 0xFF), (int)((version >> 16) & 0xFF)
+          // ignore build field (int)((version >> 24) & 0xFF)
+  );
+}
+
 static const char *format_ver(const char *format, uint32_t version) {
   static char ver_str[64];
-  mini_snprintf(ver_str, sizeof(ver_str), format, (int)(version & 0xFF),
-                (int)((version >> 8) & 0xFF), (int)((version >> 16) & 0xFF)
-                // ignore build field (int)((version >> 24) & 0xFF)
-  );
+  format_ver_bfr(format, version, ver_str, sizeof(ver_str));
   return ver_str;
 }
 
@@ -151,9 +155,12 @@ void ui_screen_welcome_third(void) {
                       COLOR_WELCOME_FG, COLOR_WELCOME_BG);
 }
 
-void ui_screen_firmware_info(const vendor_header *const vhdr,
+uint32_t ui_screen_intro(const vendor_header *const vhdr,
                              const image_header *const hdr) {
-  screen_intro();
+  char bld_ver[32];
+  format_ver_bfr("%d.%d.%d", VERSION_UINT32, bld_ver, sizeof(bld_ver));
+  const char *ver_str = format_ver("Firmware %d.%d.%d by", hdr->version);
+  return screen_intro(bld_ver, vhdr->vstr, vhdr->vstr_len, ver_str);
 }
 
 void ui_screen_firmware_fingerprint(const image_header *const hdr) {

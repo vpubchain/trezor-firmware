@@ -349,7 +349,7 @@ int main(void) {
 
       switch(screen) {
         case 0:
-          ui_result = screen_intro();
+          ui_result = ui_screen_intro(&vhdr, &hdr);
           if (ui_result == 1){
             ui_fadeout();
             screen = 1;

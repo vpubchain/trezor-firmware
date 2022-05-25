@@ -154,8 +154,17 @@ extern "C" fn screen_menu() -> u32 {
 
 
 #[no_mangle]
-extern "C" fn screen_intro() -> u32 {
-    let mut layout = BootloaderLayout::new(Intro::new());
+extern "C" fn screen_intro(bld_version: *const cty::c_char,
+                           vendor_str: *const cty::c_char,
+                           vendor_str_len: u8,
+                           version: *const cty::c_char,) -> u32 {
+
+    let ptr = vendor_str as *const u8;
+    let vendor = unsafe {CStr::from_bytes_with_nul_unchecked(slice::from_raw_parts(ptr, (vendor_str_len as usize)+1)).to_str().unwrap()};
+    let version = unsafe { CStr::from_ptr(version).to_str().unwrap() };
+    let bld_version = unsafe { CStr::from_ptr(bld_version).to_str().unwrap() };
+
+    let mut layout = BootloaderLayout::new(Intro::new(bld_version, vendor, version));
     return layout.process()
 }
 
@@ -173,17 +182,6 @@ extern "C" fn screen_progress(text: *const cty::c_char, progress: u16, initializ
 #[no_mangle]
 extern "C" fn screen_connect() -> u32 {
     let mut frame = Connect::new("Waiting for host");
-
-    frame.place(constant::screen());
-    frame.paint();
-    0
-}
-
-
-
-#[no_mangle]
-extern "C" fn screen_connected() -> u32 {
-    let mut frame = Connect::new("Connected to host");
 
     frame.place(constant::screen());
     frame.paint();

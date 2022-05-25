@@ -23,26 +23,30 @@ impl ReturnToC for IntroMsg {
 
 pub struct Intro {
     bg: Pad,
+    bld_version: &'static str,
     menu: Child<Button<&'static str>>,
     host: Child<Button<&'static str>>,
-    text1: Child<Paragraphs<&'static str>>,
+    text: Child<Paragraphs<&'static str>>,
 }
 
 
 impl Intro
 {
-    pub fn new() -> Self {
+    pub fn new(bld_version: &'static str,
+               vendor: &'static str,
+               version: &'static str) -> Self {
 
-        let p1 = Paragraphs::new(
-        ).add::<TTBootloaderText>(FONT_MEDIUM,
-                                  "This is a bootloader. It does something.")
+        let p1 = Paragraphs::new()
+            .add::<TTBootloaderText>(FONT_MEDIUM,version)
+            .add::<TTBootloaderText>(FONT_MEDIUM,vendor)
             .with_placement(LinearPlacement::vertical().align_at_start());
 
         let mut instance = Self {            
             bg: Pad::with_background(BLD_BG),
+            bld_version,
             menu: Child::new(Button::with_icon(MENU).styled(button_bld_menu())),
             host: Child::new(Button::with_text("Connect to host").styled(button_bld_menu_item())),
-            text1: Child::new(p1),
+            text: Child::new(p1),
         };
         
         instance.bg.clear();
@@ -60,7 +64,7 @@ impl Component for Intro
         self.bg.place(Rect::new (Point::new(0,0), Point::new(WIDTH, HEIGHT)));
         self.menu.place(Rect::new (Point::new(187,15), Point::new(187+38, 15+38)));
         self.host.place(Rect::new (Point::new(16,178), Point::new( 16+209,178+48)));
-        self.text1.place(Rect::new (Point::new(15,75), Point::new(225, 200)));
+        self.text.place(Rect::new (Point::new(15,75), Point::new(225, 200)));
         bounds
     }
 
@@ -73,7 +77,8 @@ impl Component for Intro
     fn paint(&mut self) {
         self.bg.paint();            
         display::text_top_left(Point::new(15,24), "BOOTLOADER", FONT_BOLD, BLD_TITLE_COLOR, BLD_BG);
-        self.text1.paint();
+        display::text_top_left(Point::new(130,24), self.bld_version, FONT_BOLD, BLD_TITLE_COLOR, BLD_BG);
+        self.text.paint();
         self.host.paint();
         self.menu.paint();
     }

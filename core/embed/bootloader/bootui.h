@@ -32,7 +32,7 @@ void ui_screen_welcome_first(void);
 void ui_screen_welcome_second(void);
 void ui_screen_welcome_third(void);
 
-void ui_screen_firmware_info(const vendor_header* const vhdr,
+uint32_t ui_screen_intro(const vendor_header* const vhdr,
                              const image_header* const hdr);
 void ui_screen_firmware_fingerprint(const image_header* const hdr);
 
