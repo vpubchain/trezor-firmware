@@ -170,11 +170,11 @@ uint32_t ui_screen_menu(void) {
 
 }
 
-void ui_screen_firmware_fingerprint(const image_header *const hdr) {
-  display_bar(0, 0, DISPLAY_RESX, DISPLAY_RESY, COLOR_BL_BG);
-  display_text(16, 32, "Firmware fingerprint", -1, FONT_NORMAL, COLOR_BL_FG,
-               COLOR_BL_BG);
-  display_bar(16, 44, DISPLAY_RESX - 14 * 2, 1, COLOR_BL_FG);
+uint32_t ui_screen_firmware_fingerprint(const image_header *const hdr) {
+//  display_bar(0, 0, DISPLAY_RESX, DISPLAY_RESY, COLOR_BL_BG);
+//  display_text(16, 32, "Firmware fingerprint", -1, FONT_NORMAL, COLOR_BL_FG,
+//               COLOR_BL_BG);
+//  display_bar(16, 44, DISPLAY_RESX - 14 * 2, 1, COLOR_BL_FG);
 
   static const char *hexdigits = "0123456789abcdef";
   char fingerprint_str[64];
@@ -182,15 +182,17 @@ void ui_screen_firmware_fingerprint(const image_header *const hdr) {
     fingerprint_str[i * 2] = hexdigits[(hdr->fingerprint[i] >> 4) & 0xF];
     fingerprint_str[i * 2 + 1] = hexdigits[hdr->fingerprint[i] & 0xF];
   }
-  for (int i = 0; i < 4; i++) {
-    display_text_center(120, 70 + i * 25, fingerprint_str + i * 16, 16,
-                        FONT_NORMAL, COLOR_BL_FG, COLOR_BL_BG);
-  }
+//  for (int i = 0; i < 4; i++) {
+//    display_text_center(120, 70 + i * 25, fingerprint_str + i * 16, 16,
+//                        FONT_NORMAL, COLOR_BL_FG, COLOR_BL_BG);
+//  }
+//
+//  display_bar_radius(9, 184, 222, 50, COLOR_BL_DONE, COLOR_BL_BG, 4);
+//  display_icon(9 + (222 - 19) / 2, 184 + (50 - 16) / 2, 20, 16,
+//               toi_icon_confirm + 12, sizeof(toi_icon_confirm) - 12,
+//               COLOR_BL_BG, COLOR_BL_DONE);
 
-  display_bar_radius(9, 184, 222, 50, COLOR_BL_DONE, COLOR_BL_BG, 4);
-  display_icon(9 + (222 - 19) / 2, 184 + (50 - 16) / 2, 20, 16,
-               toi_icon_confirm + 12, sizeof(toi_icon_confirm) - 12,
-               COLOR_BL_BG, COLOR_BL_DONE);
+  return screen_fwinfo(fingerprint_str);
 }
 
 // install UI

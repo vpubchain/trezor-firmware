@@ -37,7 +37,7 @@ uint32_t ui_screen_intro(const vendor_header* const vhdr,
 
 uint32_t ui_screen_menu(void);
 
-void ui_screen_firmware_fingerprint(const image_header* const hdr);
+uint32_t ui_screen_firmware_fingerprint(const image_header* const hdr);
 
 uint32_t ui_screen_install_confirm_upgrade(const vendor_header* const vhdr,
                                        const image_header* const hdr);

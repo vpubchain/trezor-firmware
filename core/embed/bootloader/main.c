@@ -363,17 +363,21 @@ int main(void) {
           break;
         case 1:
           ui_result = ui_screen_menu();
-          if (ui_result == 1){
+          if (ui_result == 1){ //exit menu
             ui_fadeout();
             screen = 0;
           }
-          if (ui_result == 2){
+          if (ui_result == 2){ //reboot
             ui_fadeout();
             usb_result = sectrue;
           }
-          if (ui_result == 3){
+          if (ui_result == 3){ //wipe
             ui_fadeout();
             screen = 2;
+          }
+          if (ui_result == 4){ //fw info
+            ui_fadeout();
+            screen = 3;
           }
           break;
         case 2:
@@ -381,6 +385,7 @@ int main(void) {
           if (ui_result == 1){
             //canceled
             screen = 1;
+            ui_fadeout();
           }
           if (ui_result == 2){
             ui_fadeout();
@@ -399,6 +404,11 @@ int main(void) {
               return 1;
             }
           }
+          break;
+        case 3:
+          ui_screen_firmware_fingerprint(&hdr);
+          ui_fadeout();
+          screen = 1;
           break;
         default:
           break;

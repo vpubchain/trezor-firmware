@@ -16,6 +16,7 @@ uint32_t screen_intro(const char * bld_version_str,
                       const char * version_str);
 uint32_t screen_menu(const char * bld_version_str);
 uint32_t screen_connect(void);
+uint32_t screen_fwinfo(const char * fingerprint);
 
 
 #endif //_API_C_H

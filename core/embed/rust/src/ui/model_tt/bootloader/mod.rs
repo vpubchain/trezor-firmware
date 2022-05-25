@@ -15,11 +15,13 @@ pub mod progress;
 mod theme;
 mod connect;
 mod title;
+mod fwinfo;
 
 use confirm::Confirm;
 use progress::Progress;
 use menu::Menu;
 use intro::Intro;
+use fwinfo::FwInfo;
 use crate::ui::component::text::paragraphs::Paragraphs;
 use crate::ui::geometry::LinearPlacement;
 use crate::ui::model_tt::bootloader::connect::Connect;
@@ -190,4 +192,12 @@ extern "C" fn screen_connect() -> u32 {
     frame.place(constant::screen());
     frame.paint();
     0
+}
+
+#[no_mangle]
+extern "C" fn screen_fwinfo(fingerprint: *const cty::c_char) -> u32 {
+    let fingerprint = unsafe {CStr::from_bytes_with_nul_unchecked(slice::from_raw_parts(fingerprint as *const u8, 64+1)).to_str().unwrap()};
+
+    let mut layout = BootloaderLayout::new(FwInfo::new(fingerprint));
+    return layout.process()
 }
