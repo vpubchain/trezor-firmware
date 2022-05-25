@@ -1,5 +1,6 @@
 use crate::ui::{component::{Child, Component, Event, EventCtx}, display, geometry::{Rect}};
-use crate::ui::component::{FormattedText, Pad};
+use crate::ui::component::{Pad};
+use crate::ui::component::text::paragraphs::Paragraphs;
 use crate::ui::display::Color;
 use crate::ui::geometry::Point;
 use crate::ui::model_tt::bootloader::ReturnToC;
@@ -24,7 +25,7 @@ pub struct Install {
     bg: Pad,
     label: &'static str,
     icon: Option<&'static [u8]>,
-    message: Child<FormattedText<&'static str, &'static str>>,
+    message: Child<Paragraphs<&'static str>>,
     warning: Option<&'static str>,
     cancel: Child<Button<&'static str>>,
     confirm: Child<Button<&'static str>>,
@@ -35,7 +36,7 @@ pub struct Install {
 
 impl Install
 {
-    pub fn new(label: &'static str, icon: Option<&'static [u8]> , message: FormattedText<&'static str, &'static str>) -> Self {
+    pub fn new(label: &'static str, icon: Option<&'static [u8]> , message: Paragraphs<&'static str>) -> Self {
 
         let mut instance = Self {
             bg: Pad::with_background(FG),

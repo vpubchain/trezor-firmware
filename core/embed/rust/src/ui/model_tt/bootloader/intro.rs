@@ -1,5 +1,5 @@
 use crate::ui::{component::{Child, Component, Event, EventCtx}, display, geometry::Rect};
-use crate::ui::component::{Pad, TextLayout};
+use crate::ui::component::{Pad};
 use crate::ui::component::text::paragraphs::{Paragraphs};
 use crate::ui::geometry::{LinearPlacement, Point};
 use crate::ui::model_tt::bootloader::ReturnToC;

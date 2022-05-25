@@ -1,9 +1,8 @@
 use core::slice;
 
-use crate::ui::component::text::formatted::FormattedText;
 use crate::ui::component::{Component, Event, EventCtx};
 use cstr_core::CStr;
-use crate::ui::model_tt::bootloader::theme::TTBootloaderTextTemp;
+use crate::ui::model_tt::bootloader::theme::{TTBootloaderTextTemp};
 use crate::ui::event::TouchEvent;
 use crate::trezorhal::io::{io_touch_read, io_touch_unpack_x, io_touch_unpack_y};
 use crate::ui::display;
@@ -19,6 +18,9 @@ use confirm::Install;
 use progress::BldProgress;
 use menu::BldMenu;
 use intro::BldIntro;
+use crate::ui::component::text::paragraphs::Paragraphs;
+use crate::ui::geometry::LinearPlacement;
+use crate::ui::model_tt::theme::FONT_NORMAL;
 
 
 pub trait ReturnToC {
@@ -94,14 +96,18 @@ extern "C" fn screen_install_confirm(
         else if vendor {"Vendor change"}
         else {"Update firmware"};
 
+    let message = Paragraphs::new(
+    ).add::<TTBootloaderTextTemp>(FONT_NORMAL,
+                                  "Install firmware by")
+        .add::<TTBootloaderTextTemp>(FONT_NORMAL, text)
+        .add::<TTBootloaderTextTemp>(FONT_NORMAL, version)
+        .with_placement(LinearPlacement::vertical().align_at_start());
+
+
     let mut frame = Install::new(
         title,
         ICON,
-        FormattedText::new::<TTBootloaderTextTemp>(
-            "{text}\n{msg}\n{version}",
-        )   .with("text", "Install firmware by")
-            .with("msg", text)
-            .with("version", version),
+        message
 
     );
 
@@ -119,12 +125,16 @@ extern "C" fn screen_wipe_confirm() -> u32 {
 
     const ICON: Option<&'static [u8]> = Some(include_res!("model_tt/res/info.toif"));
 
+    let message = Paragraphs::new(
+    ).add::<TTBootloaderTextTemp>(FONT_NORMAL,
+                                  "Do you want to wipe the device?")
+        .with_placement(LinearPlacement::vertical().align_at_start());
+
+
     let mut frame = Install::new(
         "Wipe device",
         ICON,
-        FormattedText::new::<TTBootloaderTextTemp>(
-            "{text}",
-        ).with("text", "Do you want to wipe the device?")
+        message
     );
     frame.add_warning("Seed will be erased!");
 
