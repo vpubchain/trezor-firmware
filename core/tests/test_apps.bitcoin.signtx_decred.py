@@ -26,7 +26,7 @@ from trezor.enums import OutputScriptType
 
 from apps.common import coins
 from apps.common.keychain import Keychain
-from apps.bitcoin.keychain import get_schemas_for_coin
+from apps.bitcoin.paths import get_schemas_for_coin
 from apps.bitcoin.sign_tx import decred, helpers
 
 

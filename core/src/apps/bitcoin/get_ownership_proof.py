@@ -8,8 +8,9 @@ from trezor.ui.layouts import confirm_action, confirm_blob
 from apps.common.paths import validate_path
 
 from . import addresses, common, scripts
-from .keychain import validate_path_against_script_type, with_keychain
+from .keychain import with_keychain
 from .ownership import generate_proof, get_identifier
+from .paths import validate_path_against_script_type
 
 if TYPE_CHECKING:
     from apps.common.coininfo import CoinInfo

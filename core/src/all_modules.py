@@ -269,6 +269,8 @@ apps.bitcoin.multisig
 import apps.bitcoin.multisig
 apps.bitcoin.ownership
 import apps.bitcoin.ownership
+apps.bitcoin.paths
+import apps.bitcoin.paths
 apps.bitcoin.readers
 import apps.bitcoin.readers
 apps.bitcoin.scripts

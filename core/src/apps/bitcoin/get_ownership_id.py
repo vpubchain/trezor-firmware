@@ -7,8 +7,9 @@ from trezor.messages import GetOwnershipId, OwnershipId
 from apps.common.paths import validate_path
 
 from . import addresses, common, scripts
-from .keychain import validate_path_against_script_type, with_keychain
+from .keychain import with_keychain
 from .ownership import get_identifier
+from .paths import validate_path_against_script_type
 
 if TYPE_CHECKING:
     from apps.common.coininfo import CoinInfo

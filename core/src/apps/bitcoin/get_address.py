@@ -9,8 +9,9 @@ from apps.common.address_mac import get_address_mac
 from apps.common.paths import address_n_to_str, validate_path
 
 from . import addresses
-from .keychain import validate_path_against_script_type, with_keychain
+from .keychain import with_keychain
 from .multisig import multisig_pubkey_index
+from .paths import validate_path_against_script_type
 
 if TYPE_CHECKING:
     from trezor.messages import GetAddress

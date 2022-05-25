@@ -12,7 +12,8 @@ from apps.common.paths import PathSchema, validate_path
 
 from .authorization import FEE_RATE_DECIMALS
 from .common import BIP32_WALLET_DEPTH
-from .keychain import PATTERN_SLIP25, with_keychain
+from .keychain import with_keychain
+from .paths import PATTERN_SLIP25
 
 if TYPE_CHECKING:
     from apps.common.coininfo import CoinInfo

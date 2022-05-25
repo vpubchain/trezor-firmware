@@ -9,7 +9,7 @@ from apps.common import safety_checks
 
 from ..authorization import FEE_RATE_DECIMALS
 from ..common import input_is_external_unverified
-from ..keychain import validate_path_against_script_type
+from ..paths import validate_path_against_script_type
 from . import helpers, tx_weight
 from .payment_request import PaymentRequestVerifier
 from .tx_info import OriginalTxInfo, TxInfo
