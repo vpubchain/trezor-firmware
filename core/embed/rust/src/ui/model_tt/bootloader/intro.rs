@@ -1,8 +1,9 @@
 use crate::ui::{component::{Child, Component, Event, EventCtx}, display, geometry::Rect};
-use crate::ui::component::{FormattedText, Pad};
-use crate::ui::geometry::Point;
+use crate::ui::component::{Pad, TextLayout};
+use crate::ui::component::text::paragraphs::{Paragraphs};
+use crate::ui::geometry::{LinearPlacement, Point};
 use crate::ui::model_tt::bootloader::ReturnToC;
-use crate::ui::model_tt::theme::{FONT_BOLD};
+use crate::ui::model_tt::theme::{FONT_BOLD, FONT_MEDIUM};
 use crate::ui::model_tt::bootloader::theme::{BLD_BG, BLD_TITLE_COLOR, button_bld_menu, MENU, TTBootloaderText, button_bld_menu_item};
 use crate::ui::model_tt::component::{ButtonMsg::{Clicked}};
 
@@ -24,7 +25,7 @@ pub struct BldIntro {
     bg: Pad,
     menu: Child<Button<&'static str>>,
     host: Child<Button<&'static str>>,
-    text1: Child<FormattedText<&'static str, &'static str>>,
+    text1: Child<Paragraphs<&'static str>>,
 }
 
 
@@ -32,15 +33,16 @@ impl BldIntro
 {
     pub fn new() -> Self {
 
-        let text1 = FormattedText::new::<TTBootloaderText>(
-            "This is a bootloader. It does something.",
-        );
+        let p1 = Paragraphs::new(
+        ).add::<TTBootloaderText>(FONT_MEDIUM,
+                                  "This is a bootloader. It does something.")
+            .with_placement(LinearPlacement::vertical().align_at_start());
 
         let mut instance = Self {            
             bg: Pad::with_background(BLD_BG),
             menu: Child::new(Button::with_icon(MENU).styled(button_bld_menu())),
             host: Child::new(Button::with_text("Connect to host").styled(button_bld_menu_item())),
-            text1: Child::new(text1),
+            text1: Child::new(p1),
         };
         
         instance.bg.clear();
