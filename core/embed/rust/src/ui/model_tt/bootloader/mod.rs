@@ -3,7 +3,7 @@ use core::slice;
 use crate::ui::component::text::formatted::FormattedText;
 use crate::ui::component::{Component, Event, EventCtx};
 use cstr_core::CStr;
-use crate::ui::model_tt::theme::TTBootloaderTextTemp;
+use crate::ui::model_tt::bootloader::theme::TTBootloaderTextTemp;
 use crate::ui::event::TouchEvent;
 use crate::trezorhal::io::{io_touch_read, io_touch_unpack_x, io_touch_unpack_y};
 use crate::ui::display;
@@ -13,6 +13,7 @@ pub mod confirm;
 pub mod menu;
 pub mod intro;
 pub mod progress;
+mod theme;
 
 use confirm::Install;
 use progress::BldProgress;

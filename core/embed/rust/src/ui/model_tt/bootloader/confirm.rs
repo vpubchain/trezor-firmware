@@ -3,8 +3,9 @@ use crate::ui::component::{FormattedText, Pad};
 use crate::ui::display::Color;
 use crate::ui::geometry::Point;
 use crate::ui::model_tt::bootloader::ReturnToC;
-use crate::ui::model_tt::component::{Button, ButtonStyle, ButtonStyleSheet};
-use crate::ui::model_tt::theme::{BG, FG, FONT_BOLD, GREEN, GREEN_DARK, GREY_LIGHT, RADIUS, RED, RED_DARK, ICON_CANCEL, ICON_CONFIRM, FONT_NORMAL};
+use crate::ui::model_tt::bootloader::theme::{button_cancel, button_confirm};
+use crate::ui::model_tt::component::{Button};
+use crate::ui::model_tt::theme::{BG, FG, ICON_CANCEL, ICON_CONFIRM, FONT_NORMAL};
 use crate::ui::model_tt::constant::{HEIGHT, WIDTH};
 use crate::ui::model_tt::component::ButtonMsg::{Clicked};
 
@@ -29,71 +30,6 @@ pub struct Install {
     confirm: Child<Button<&'static str>>,
 }
 
-
-pub fn button_cancel() -> ButtonStyleSheet {
-    ButtonStyleSheet {
-        normal: &ButtonStyle {
-            font: FONT_BOLD,
-            text_color: FG,
-            button_color: RED,
-            background_color: FG,
-            border_color: FG,
-            border_radius: RADIUS,
-            border_width: 0,
-        },
-        active: &ButtonStyle {
-            font: FONT_BOLD,
-            text_color: FG,
-            button_color: RED_DARK,
-            background_color: FG,
-            border_color: BG,
-            border_radius: RADIUS,
-            border_width: 0,
-        },
-        disabled: &ButtonStyle {
-            font: FONT_BOLD,
-            text_color: GREY_LIGHT,
-            button_color: RED,
-            background_color: FG,
-            border_color: FG,
-            border_radius: RADIUS,
-            border_width: 0,
-        },
-    }
-}
-
-
-pub fn button_confirm() -> ButtonStyleSheet {
-    ButtonStyleSheet {
-        normal: &ButtonStyle {
-            font: FONT_BOLD,
-            text_color: FG,
-            button_color: GREEN,
-            background_color: FG,
-            border_color: FG,
-            border_radius: RADIUS,
-            border_width: 0,
-        },
-        active: &ButtonStyle {
-            font: FONT_BOLD,
-            text_color: FG,
-            button_color: GREEN_DARK,
-            background_color: FG,
-            border_color: FG,
-            border_radius: RADIUS,
-            border_width: 0,
-        },
-        disabled: &ButtonStyle {
-            font: FONT_BOLD,
-            text_color: FG,
-            button_color: GREEN,
-            background_color: FG,
-            border_color: FG,
-            border_radius: RADIUS,
-            border_width: 0,
-        },
-    }
-}
 
 
 

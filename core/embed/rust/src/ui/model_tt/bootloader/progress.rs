@@ -2,7 +2,8 @@ use crate::ui::{component::{Component, Event, EventCtx}, display, geometry::Rect
 use crate::ui::component::Pad;
 use crate::ui::geometry::Point;
 use crate::ui::model_tt::bootloader::ReturnToC;
-use crate::ui::model_tt::theme::{BLD_BG, BLD_FG, RECEIVE, FONT_MEDIUM};
+use crate::ui::model_tt::theme::{FONT_MEDIUM};
+use crate::ui::model_tt::bootloader::theme::{BLD_BG, BLD_FG, RECEIVE};
 use crate::ui::model_tt::constant::{HEIGHT, WIDTH};
 
 

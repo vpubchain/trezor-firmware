@@ -2,7 +2,8 @@ use crate::ui::{component::{Child, Component, Event, EventCtx}, display, geometr
 use crate::ui::component::Pad;
 use crate::ui::geometry::Point;
 use crate::ui::model_tt::bootloader::ReturnToC;
-use crate::ui::model_tt::theme::{BLD_BG, button_bld_menu, button_bld_menu_item, BLD_TITLE_COLOR, REBOOT, FWINFO, RESET, CLOSE, FONT_BOLD};
+use crate::ui::model_tt::theme::{FONT_BOLD};
+use crate::ui::model_tt::bootloader::theme::{BLD_BG, button_bld_menu, button_bld_menu_item, BLD_TITLE_COLOR, REBOOT, FWINFO, RESET, CLOSE};
 use crate::ui::model_tt::component::ButtonMsg::{Clicked};
 use crate::ui::model_tt::component::{Button, IconText};
 use crate::ui::model_tt::constant::{HEIGHT, WIDTH};
