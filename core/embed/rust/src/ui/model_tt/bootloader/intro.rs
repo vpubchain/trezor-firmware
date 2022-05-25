@@ -13,15 +13,15 @@ use crate::ui::model_tt::constant::{HEIGHT, WIDTH};
 
 #[repr(u32)]
 #[derive(Copy, Clone)]
-pub enum BldIntroMsg  {
+pub enum IntroMsg {
     Menu = 1,
     Host = 2,
 }
-impl ReturnToC for BldIntroMsg {
+impl ReturnToC for IntroMsg {
     fn return_to_c(&self) -> u32 { *self as u32 }
 }
 
-pub struct BldIntro {
+pub struct Intro {
     bg: Pad,
     menu: Child<Button<&'static str>>,
     host: Child<Button<&'static str>>,
@@ -29,7 +29,7 @@ pub struct BldIntro {
 }
 
 
-impl BldIntro
+impl Intro
 {
     pub fn new() -> Self {
 
@@ -51,10 +51,10 @@ impl BldIntro
 }
 
 
-impl Component for BldIntro
+impl Component for Intro
 {
 
-    type Msg = BldIntroMsg;
+    type Msg = IntroMsg;
 
     fn place(&mut self, bounds: Rect) -> Rect {
         self.bg.place(Rect::new (Point::new(0,0), Point::new(WIDTH, HEIGHT)));

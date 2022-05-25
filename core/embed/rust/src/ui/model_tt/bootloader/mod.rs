@@ -15,10 +15,10 @@ pub mod progress;
 mod theme;
 mod connect;
 
-use confirm::Install;
-use progress::BldProgress;
-use menu::BldMenu;
-use intro::BldIntro;
+use confirm::Confirm;
+use progress::Progress;
+use menu::Menu;
+use intro::Intro;
 use crate::ui::component::text::paragraphs::Paragraphs;
 use crate::ui::geometry::LinearPlacement;
 use crate::ui::model_tt::bootloader::connect::Connect;
@@ -106,7 +106,7 @@ extern "C" fn screen_install_confirm(
         .with_placement(LinearPlacement::vertical().align_at_start());
 
 
-    let mut frame = Install::new(
+    let mut frame = Confirm::new(
         title,
         ICON,
         message
@@ -133,7 +133,7 @@ extern "C" fn screen_wipe_confirm() -> u32 {
         .with_placement(LinearPlacement::vertical().align_at_start());
 
 
-    let mut frame = Install::new(
+    let mut frame = Confirm::new(
         "Wipe device",
         ICON,
         message
@@ -148,21 +148,21 @@ extern "C" fn screen_wipe_confirm() -> u32 {
 
 #[no_mangle]
 extern "C" fn screen_menu() -> u32 {
-    let mut layout = BootloaderLayout::new(BldMenu::new());
+    let mut layout = BootloaderLayout::new(Menu::new());
     return layout.process()
 }
 
 
 #[no_mangle]
 extern "C" fn screen_intro() -> u32 {
-    let mut layout = BootloaderLayout::new(BldIntro::new());
+    let mut layout = BootloaderLayout::new(Intro::new());
     return layout.process()
 }
 
 #[no_mangle]
 extern "C" fn screen_progress(text: *const cty::c_char, progress: u16, initialize: bool) -> u32 {
     let text = unsafe { CStr::from_ptr(text).to_str().unwrap() };
-    let mut frame = BldProgress::new(text, initialize);
+    let mut frame = Progress::new(text, initialize);
 
     frame.place(constant::screen());
     frame.set_progress(progress);

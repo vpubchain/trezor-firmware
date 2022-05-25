@@ -13,15 +13,15 @@ use crate::ui::model_tt::component::ButtonMsg::{Clicked};
 
 #[repr(u32)]
 #[derive(Copy, Clone)]
-pub enum InstallMsg  {
+pub enum ConfirmMsg {
     Cancel = 1,
     Confirm = 2,
 }
-impl ReturnToC for InstallMsg{
+impl ReturnToC for ConfirmMsg {
     fn return_to_c(&self) -> u32 { *self as u32 }
 }
 
-pub struct Install {
+pub struct Confirm {
     bg: Pad,
     label: &'static str,
     icon: Option<&'static [u8]>,
@@ -34,7 +34,7 @@ pub struct Install {
 
 
 
-impl Install
+impl Confirm
 {
     pub fn new(label: &'static str, icon: Option<&'static [u8]> , message: Paragraphs<&'static str>) -> Self {
 
@@ -59,9 +59,9 @@ impl Install
 
 
 
-impl Component for Install
+impl Component for Confirm
 {
-    type Msg = InstallMsg;
+    type Msg = ConfirmMsg;
 
     fn place(&mut self, bounds: Rect) -> Rect {
         self.bg.place(Rect::new (Point::new(0,0), Point::new(WIDTH, HEIGHT)));

@@ -9,14 +9,14 @@ use crate::ui::model_tt::constant::{HEIGHT, WIDTH};
 
 #[repr(u32)]
 #[derive(Copy, Clone)]
-pub enum BldProgressMsg {
+pub enum ProgressMsg {
     None
 }
-impl ReturnToC for BldProgressMsg{
+impl ReturnToC for ProgressMsg {
     fn return_to_c(&self) -> u32 { *self as u32 }
 }
 
-pub struct BldProgress {
+pub struct Progress {
     bg: Pad,
     text: &'static str,
     icon: &'static [u8],
@@ -25,7 +25,7 @@ pub struct BldProgress {
 
 
 
-impl BldProgress
+impl Progress
 {
     pub fn new(text: &'static str, clear: bool) -> Self {
         let mut instance = Self {
@@ -47,10 +47,10 @@ impl BldProgress
 
 
 
-impl Component for BldProgress
+impl Component for Progress
 {
 
-    type Msg = BldProgressMsg;
+    type Msg = ProgressMsg;
 
     fn place(&mut self, bounds: Rect) -> Rect {
         self.bg.place(Rect::new (Point::new(0,0), Point::new(WIDTH, HEIGHT)));

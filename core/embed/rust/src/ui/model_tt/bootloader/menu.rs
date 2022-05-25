@@ -11,17 +11,17 @@ use crate::ui::model_tt::constant::{HEIGHT, WIDTH};
 
 #[repr(u32)]
 #[derive(Copy, Clone)]
-pub enum BldMenuMsg  {
+pub enum MenuMsg {
     Close = 1,
     Reboot = 2,
     FactoryReset = 3,
     FwInfo = 4,
 }
-impl ReturnToC for BldMenuMsg{
+impl ReturnToC for MenuMsg {
     fn return_to_c(&self) -> u32 { *self as u32 }
 }
 
-pub struct BldMenu {
+pub struct Menu {
     bg: Pad,
     close: Child<Button<&'static str>>,
     reboot: Child<Button<&'static str>>,
@@ -30,7 +30,7 @@ pub struct BldMenu {
 }
 
 
-impl BldMenu
+impl Menu
 {
     pub fn new() -> Self {
 
@@ -51,10 +51,10 @@ impl BldMenu
 }
 
 
-impl Component for BldMenu
+impl Component for Menu
 {
 
-    type Msg = BldMenuMsg;
+    type Msg = MenuMsg;
 
     fn place(&mut self, bounds: Rect) -> Rect {
         self.bg.place(Rect::new (Point::new(0,0), Point::new(WIDTH, HEIGHT)));
