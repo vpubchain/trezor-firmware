@@ -66,16 +66,6 @@
 
 // common shared functions
 
-//static void ui_confirm_cancel_buttons(void) {
-//  display_bar_radius(9, 184, 108, 50, COLOR_BL_FAIL, COLOR_BL_BG, 4);
-//  display_icon(9 + (108 - 16) / 2, 184 + (50 - 16) / 2, 16, 16,
-//               toi_icon_cancel + 12, sizeof(toi_icon_cancel) - 12, COLOR_BL_BG,
-//               COLOR_BL_FAIL);
-//  display_bar_radius(123, 184, 108, 50, COLOR_BL_DONE, COLOR_BL_BG, 4);
-//  display_icon(123 + (108 - 19) / 2, 184 + (50 - 16) / 2, 20, 16,
-//               toi_icon_confirm + 12, sizeof(toi_icon_confirm) - 12,
-//               COLOR_BL_BG, COLOR_BL_DONE);
-//}
 
 static const char *format_ver(const char *format, uint32_t version) {
   static char ver_str[64];
@@ -161,47 +151,9 @@ void ui_screen_welcome_third(void) {
                       COLOR_WELCOME_FG, COLOR_WELCOME_BG);
 }
 
-// info UI
-//
-//static int display_vendor_string(const char *text, int textlen,
-//                                 uint16_t fgcolor) {
-//  int split = display_text_split(text, textlen, FONT_NORMAL, DISPLAY_RESX - 55);
-//  if (split >= textlen) {
-//    display_text(55, 95, text, textlen, FONT_NORMAL, fgcolor, COLOR_BL_BG);
-//    return 120;
-//  } else {
-//    display_text(55, 95, text, split, FONT_NORMAL, fgcolor, COLOR_BL_BG);
-//    if (text[split] == ' ') {
-//      split++;
-//    }
-//    display_text(55, 120, text + split, textlen - split, FONT_NORMAL, fgcolor,
-//                 COLOR_BL_BG);
-//    return 145;
-//  }
-//}
-
 void ui_screen_firmware_info(const vendor_header *const vhdr,
                              const image_header *const hdr) {
-
   screen_intro();
-
-
-//  display_bar(0, 0, DISPLAY_RESX, DISPLAY_RESY, COLOR_BL_BG);
-//  const char *ver_str = format_ver("Bootloader %d.%d.%d", VERSION_UINT32);
-//  display_text(16, 32, ver_str, -1, FONT_NORMAL, COLOR_BL_FG, COLOR_BL_BG);
-//  display_bar(16, 44, DISPLAY_RESX - 14 * 2, 1, COLOR_BL_FG);
-//  display_icon(16, 54, 32, 32, toi_icon_info + 12, sizeof(toi_icon_info) - 12,
-//               COLOR_BL_GRAY, COLOR_BL_BG);
-//  if (vhdr && hdr) {
-//    ver_str = format_ver("Firmware %d.%d.%d by", (hdr->version));
-//    display_text(55, 70, ver_str, -1, FONT_NORMAL, COLOR_BL_GRAY, COLOR_BL_BG);
-//    display_vendor_string(vhdr->vstr, vhdr->vstr_len, COLOR_BL_GRAY);
-//  } else {
-//    display_text(55, 70, "No Firmware", -1, FONT_NORMAL, COLOR_BL_GRAY,
-//                 COLOR_BL_BG);
-//  }
-//  display_text_center(120, 220, "Go to trezor.io/start", -1, FONT_NORMAL,
-//                      COLOR_BL_FG, COLOR_BL_BG);
 }
 
 void ui_screen_firmware_fingerprint(const image_header *const hdr) {
@@ -231,22 +183,8 @@ void ui_screen_firmware_fingerprint(const image_header *const hdr) {
 
 uint32_t ui_screen_install_confirm_upgrade(const vendor_header *const vhdr,
                                        const image_header *const hdr) {
-
   const char *ver_str = format_ver("to version %d.%d.%d?", hdr->version);
   return screen_install_confirm(vhdr->vstr, vhdr->vstr_len, ver_str, false, false);
-//
-//  display_bar(0, 0, DISPLAY_RESX, DISPLAY_RESY, COLOR_BL_BG);
-//  display_text(16, 32, "Firmware update", -1, FONT_NORMAL, COLOR_BL_FG,
-//               COLOR_BL_BG);
-//  display_bar(16, 44, DISPLAY_RESX - 14 * 2, 1, COLOR_BL_FG);
-//  display_icon(16, 54, 32, 32, toi_icon_info + 12, sizeof(toi_icon_info) - 12,
-//               COLOR_BL_FG, COLOR_BL_BG);
-//  display_text(55, 70, "Update firmware by", -1, FONT_NORMAL, COLOR_BL_FG,
-//               COLOR_BL_BG);
-//  int next_y = display_vendor_string(vhdr->vstr, vhdr->vstr_len, COLOR_BL_FG);
-//
-//  display_text(55, next_y, ver_str, -1, FONT_NORMAL, COLOR_BL_FG, COLOR_BL_BG);
-//  ui_confirm_cancel_buttons();
 }
 
 uint32_t ui_screen_install_confirm_newvendor_or_downgrade_wipe(
@@ -256,23 +194,6 @@ uint32_t ui_screen_install_confirm_newvendor_or_downgrade_wipe(
   const char *ver_str = format_ver("to version %d.%d.%d?", hdr->version);
   return screen_install_confirm(vhdr->vstr, vhdr->vstr_len, ver_str,
                          downgrade_wipe, !downgrade_wipe);
-//
-//  display_bar(0, 0, DISPLAY_RESX, DISPLAY_RESY, COLOR_BL_BG);
-//  display_text(
-//      16, 32,
-//      (sectrue == downgrade_wipe) ? "Firmware downgrade" : "Vendor change", -1,
-//      FONT_NORMAL, COLOR_BL_FG, COLOR_BL_BG);
-//  display_bar(16, 44, DISPLAY_RESX - 14 * 2, 1, COLOR_BL_FG);
-//  display_icon(16, 54, 32, 32, toi_icon_info + 12, sizeof(toi_icon_info) - 12,
-//               COLOR_BL_FG, COLOR_BL_BG);
-//  display_text(55, 70, "Install firmware by", -1, FONT_NORMAL, COLOR_BL_FG,
-//               COLOR_BL_BG);
-//  int next_y = display_vendor_string(vhdr->vstr, vhdr->vstr_len, COLOR_BL_FG);
-//  const char *ver_str = format_ver("(version %d.%d.%d)?", hdr->version);
-//  display_text(55, next_y, ver_str, -1, FONT_NORMAL, COLOR_BL_FG, COLOR_BL_BG);
-//  display_text_center(120, 170, "Seed will be erased!", -1, FONT_NORMAL,
-//                      COLOR_BL_FAIL, COLOR_BL_BG);
-//  ui_confirm_cancel_buttons();
 }
 
 void ui_screen_install_start(void) {
@@ -291,21 +212,6 @@ void ui_screen_install_progress_upload(int pos) {
 
 uint32_t ui_screen_wipe_confirm(void) {
   return screen_wipe_confirm();
-
-//  display_bar(0, 0, DISPLAY_RESX, DISPLAY_RESY, COLOR_BL_BG);
-//  display_text(16, 32, "Wipe device", -1, FONT_NORMAL, COLOR_BL_FG,
-//               COLOR_BL_BG);
-//  display_bar(16, 44, DISPLAY_RESX - 14 * 2, 1, COLOR_BL_FG);
-//  display_icon(16, 54, 32, 32, toi_icon_info + 12, sizeof(toi_icon_info) - 12,
-//               COLOR_BL_FG, COLOR_BL_BG);
-//  display_text(55, 70, "Do you want to", -1, FONT_NORMAL, COLOR_BL_FG,
-//               COLOR_BL_BG);
-//  display_text(55, 95, "wipe the device?", -1, FONT_NORMAL, COLOR_BL_FG,
-//               COLOR_BL_BG);
-//
-//  display_text_center(120, 170, "Seed will be erased!", -1, FONT_NORMAL,
-//                      COLOR_BL_FAIL, COLOR_BL_BG);
-//  ui_confirm_cancel_buttons();
 }
 
 void ui_screen_wipe(void) {
@@ -358,44 +264,4 @@ void ui_fadein(void) { display_fade(0, BACKLIGHT_NORMAL, 1000); }
 void ui_fadeout(void) {
   display_fade(BACKLIGHT_NORMAL, 0, 500);
   display_clear();
-}
-
-int ui_user_input(int zones) {
-  for (;;) {
-#if defined TREZOR_MODEL_T
-    uint32_t evt = touch_click();
-    uint16_t x = touch_unpack_x(evt);
-    uint16_t y = touch_unpack_y(evt);
-    // clicked on Cancel button
-    if ((zones & INPUT_CANCEL) && x >= 9 && x < 9 + 108 && y > 184 &&
-        y < 184 + 50) {
-      return INPUT_CANCEL;
-    }
-    // clicked on Confirm button
-    if ((zones & INPUT_CONFIRM) && x >= 123 && x < 123 + 108 && y > 184 &&
-        y < 184 + 50) {
-      return INPUT_CONFIRM;
-    }
-    // clicked on Long Confirm button
-    if ((zones & INPUT_LONG_CONFIRM) && x >= 9 && x < 9 + 222 && y > 184 &&
-        y < 184 + 50) {
-      return INPUT_LONG_CONFIRM;
-    }
-    // clicked on Info icon
-    if ((zones & INPUT_INFO) && x >= 16 && x < 16 + 32 && y > 54 &&
-        y < 54 + 32) {
-      return INPUT_INFO;
-    }
-#elif defined TREZOR_MODEL_R
-    uint32_t evt = button_read();
-    if (evt == (BTN_LEFT | BTN_EVT_DOWN)) {
-      return INPUT_CANCEL;
-    }
-    if (evt == (BTN_RIGHT | BTN_EVT_DOWN)) {
-      return INPUT_CONFIRM;
-    }
-#else
-#error Unknown Trezor model
-#endif
-  }
 }
