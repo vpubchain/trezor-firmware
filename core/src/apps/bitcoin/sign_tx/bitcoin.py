@@ -54,6 +54,9 @@ class Bitcoin:
         # Add inputs to sig_hasher and h_tx_check and compute the sum of input amounts.
         await self.step1_process_inputs()
 
+        # Approve the source account.
+        await self.approver.approve_account(self.tx_info)
+
         # Approve the original TXIDs in case of a replacement transaction.
         await self.approver.approve_orig_txids(self.tx_info, self.orig_txs)
 

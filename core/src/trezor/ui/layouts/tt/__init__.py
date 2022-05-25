@@ -45,6 +45,7 @@ if TYPE_CHECKING:
 
 
 __all__ = (
+    "confirm_account",
     "confirm_action",
     "confirm_address",
     "confirm_text",
@@ -923,6 +924,14 @@ async def confirm_metadata(
     cls = HoldToConfirm if hold else Confirm
 
     await raise_if_cancelled(interact(ctx, cls(text), br_type, br_code))
+
+
+async def confirm_account(ctx: wire.GenericContext, description: str) -> None:
+    text = Text("Confirm account", ui.ICON_SEND, ui.GREEN)
+    text.normal(f"Spend from {description}?")
+    await raise_if_cancelled(
+        interact(ctx, Confirm(text), "confirm_account", ButtonRequestType.SignTx)
+    )
 
 
 async def confirm_replacement(

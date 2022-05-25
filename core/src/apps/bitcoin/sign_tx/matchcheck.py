@@ -91,6 +91,12 @@ class WalletPathChecker(MatchChecker):
             return None
         return txio.address_n[:-BIP32_WALLET_DEPTH]
 
+    def get_wallet_path(self) -> list[int] | None:
+        if isinstance(self.attribute, list):
+            return self.attribute
+        else:
+            return None
+
 
 class MultisigFingerprintChecker(MatchChecker):
     def attribute_from_tx(self, txio: TxInput | TxOutput) -> Any:

@@ -6,10 +6,11 @@ from trezor.enums import OutputScriptType
 from trezor.ui.components.common.confirm import INFO
 
 from apps.common import safety_checks
+from apps.common.paths import address_n_to_str
 
 from ..authorization import FEE_RATE_DECIMALS
 from ..common import input_is_external_unverified
-from ..paths import validate_path_against_script_type
+from ..paths import address_n_to_name, validate_path_against_script_type
 from . import helpers, tx_weight
 from .payment_request import PaymentRequestVerifier
 from .tx_info import OriginalTxInfo, TxInfo
@@ -121,6 +122,9 @@ class Approver:
     def add_orig_external_output(self, txo: TxOutput) -> None:
         self.orig_total_out += txo.amount
 
+    async def approve_account(self, tx_info: TxInfo) -> None:
+        raise NotImplementedError
+
     async def approve_orig_txids(
         self, tx_info: TxInfo, orig_txs: list[OriginalTxInfo]
     ) -> None:
@@ -213,6 +217,21 @@ class BasicApprover(Approver):
 
         result = await helpers.confirm_payment_request(msg, self.coin, self.amount_unit)
         self.show_payment_req_details = result is INFO
+
+    async def approve_account(self, tx_info: TxInfo) -> None:
+        wallet_path = tx_info.wallet_path.get_wallet_path()
+        if not wallet_path:
+            description = f"multiple {self.coin.coin_name} accounts"
+        else:
+            account_name = address_n_to_name(wallet_path + [0, 0], self.coin)
+            if account_name:
+                description = f"{self.coin.coin_name} {account_name}"
+            else:
+                description = (
+                    f"{self.coin.coin_name} account {address_n_to_str(wallet_path)}"
+                )
+
+        await helpers.confirm_account(description)
 
     async def approve_orig_txids(
         self, tx_info: TxInfo, orig_txs: list[OriginalTxInfo]
@@ -378,6 +397,9 @@ class CoinJoinApprover(Approver):
 
         if msg.memos:
             raise wire.DataError("Memos not allowed in CoinJoin payment request.")
+
+    async def approve_account(self, tx_info: TxInfo) -> None:
+        pass
 
     async def approve_orig_txids(
         self, tx_info: TxInfo, orig_txs: list[OriginalTxInfo]

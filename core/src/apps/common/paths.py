@@ -2,6 +2,7 @@ from micropython import const
 from typing import TYPE_CHECKING
 
 HARDENED = const(0x8000_0000)
+UNHARDEN_MASK = const(0x7FFF_FFFF)
 
 if TYPE_CHECKING:
     from typing import (

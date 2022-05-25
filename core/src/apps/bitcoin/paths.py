@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from trezor.enums import InputScriptType
 
-from apps.common.paths import PATTERN_BIP44, PathSchema
+from apps.common.paths import PATTERN_BIP44, UNHARDEN_MASK, PathSchema
 
 from .common import BITCOIN_NAMES
 
@@ -202,3 +202,24 @@ def get_schemas_for_coin(
 
     gc.collect()
     return [schema.copy() for schema in schemas]
+
+
+def address_n_to_name(address_n: list[int], coin: CoinInfo) -> str | None:
+    patterns: list[tuple[str, str]] = [(PATTERN_BIP44, "Legacy")]
+    if coin.segwit:
+        patterns.append((PATTERN_BIP49, "Legacy SegWit"))
+        patterns.append((PATTERN_BIP84, "SegWit"))
+
+    if coin.taproot:
+        patterns.append((PATTERN_BIP86, "Taproot"))
+        patterns.append((PATTERN_SLIP25, "CoinJoin"))
+
+    for pattern, account_type in patterns:
+        if PathSchema.parse(pattern, coin.slip44).match(address_n):
+            account_number = (address_n[2] & UNHARDEN_MASK) + 1
+            if len(patterns) == 1:
+                return f"account #{account_number}"
+            else:
+                return f"{account_type} account #{account_number}"
+
+    return None

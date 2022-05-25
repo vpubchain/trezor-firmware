@@ -440,6 +440,10 @@ async def confirm_metadata(
     raise NotImplementedError
 
 
+async def confirm_account(ctx: wire.GenericContext, description: str) -> None:
+    raise NotImplementedError
+
+
 async def confirm_replacement(
     ctx: wire.GenericContext, description: str, txid: str
 ) -> None:

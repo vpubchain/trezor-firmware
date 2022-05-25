@@ -123,6 +123,10 @@ async def confirm_payment_request(
     )
 
 
+async def confirm_account(ctx: wire.Context, description: str) -> None:
+    await layouts.confirm_account(ctx, description)
+
+
 async def confirm_replacement(ctx: wire.Context, description: str, txid: bytes) -> None:
     await layouts.confirm_replacement(
         ctx,
