@@ -342,7 +342,6 @@ int main(void) {
   if (touched || stay_in_bootloader == sectrue) {
     // no ui_fadeout(); - we already start from black screen
     uint32_t screen = 0;
-    usb_init_all(secfalse);
 
     while(true){
       uint32_t usb_result = 0xFFFFFFFF;
@@ -355,14 +354,8 @@ int main(void) {
             ui_fadeout();
             screen = 1;
           }
-          if (ui_result == 0xBBBBBBBB) {
-            usb_result = secfalse;
-            //shutdown
-            return 1;
-          }
-          if (ui_result == sectrue) {
-            usb_result = sectrue;
-            //jump to firmware
+          if (ui_result == 2){
+            usb_result = bootloader_usb_loop(&vhdr, &hdr);
           }
           break;
         case 1:
@@ -379,15 +372,6 @@ int main(void) {
             ui_fadeout();
             screen = 2;
           }
-          if (ui_result == 0xBBBBBBBB) {
-            usb_result = secfalse;
-            //shutdown
-            return 1;
-          }
-          if (ui_result == sectrue) {
-            usb_result = sectrue;
-            //jump to firmware
-          }
           break;
         case 2:
           ui_result = screen_wipe_confirm();
@@ -399,20 +383,16 @@ int main(void) {
             ui_fadeout();
             ui_screen_wipe();
             ui_fadein();
-            int r = bootloader_WipeDevice();
+            secbool r = bootloader_WipeDevice();
             if (r != sectrue) {  // error
               ui_fadeout();
               ui_screen_fail();
               ui_fadein();
-              usb_stop();
-              usb_deinit();
               return 1;
             } else {            // success
               ui_fadeout();
               ui_screen_done(0, sectrue);
               ui_fadein();
-              usb_stop();
-              usb_deinit();
               return 1;
             }
           }
