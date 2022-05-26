@@ -7,7 +7,10 @@ from trezor.enums import AmountUnit, ButtonRequestType, OutputScriptType
 from trezor.strings import format_amount, format_timestamp
 from trezor.ui import layouts
 
+from apps.common.paths import address_n_to_str
+
 from .. import addresses
+from ..paths import address_n_to_name
 from . import omni
 
 if not utils.BITCOIN_ONLY:
@@ -73,6 +76,12 @@ async def confirm_output(
         else:
             title = "Confirm sending"
             icon = ui.ICON_SEND
+
+        if output.address_n:
+            account_name = address_n_to_name(output.address_n, coin)
+            if account_name:
+                address_short += "\n" + account_name
+            address_short += f"\nPath {address_n_to_str(output.address_n)}"
 
         layout = layouts.confirm_output(
             ctx,
