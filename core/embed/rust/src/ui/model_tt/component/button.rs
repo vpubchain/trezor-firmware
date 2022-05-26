@@ -382,46 +382,65 @@ impl<T> Button<T> {
 pub struct IconText {
     text: &'static str,
     icon: &'static [u8],
-    text_offset: i32,
-    icon_offset: i32,
 }
 
 impl IconText {
 
     pub fn new(text: &'static str,
-               icon: &'static [u8],
-               text_offset: i32,
-               icon_offset: i32,) -> Self {
+               icon: &'static [u8], ) -> Self {
         Self {
             text,
             icon,
-            text_offset,
-            icon_offset
         }
     }
 
     pub fn paint(&self, area: Rect, style: &ButtonStyle, baseline_offset: i32) {
         let width = style.font.text_width(self.text);
         let height = style.font.text_height();
-        let start_of_baseline = area.center()
-            + Offset::new(-width / 2, height / 2);
 
-        let text_pos = Point::new(area.top_left().x + self.text_offset, start_of_baseline.y);
-        display::text(
-            text_pos,
-            self.text,
-            style.font,
-            style.text_color,
-            style.button_color,
-        );
+        let mut use_icon = false;
+        let mut use_text = false;
 
-        let icon_pos = Point::new(area.top_left().x + self.icon_offset, area.center().y);
 
-        display::icon(
-            icon_pos,
-            self.icon,
-            style.text_color,
-            style.button_color,
-        );
+        let mut icon_pos = Point::new(area.top_left().x + 25, area.center().y);
+        let mut text_pos = area.center()
+            + Offset::new(-width / 2, height / 2)
+            + Offset::y(baseline_offset);
+
+        if area.width() > (46 + 10 + width) {
+            //display both icon and text
+            let start_of_baseline = area.center()
+                + Offset::new(-width / 2, height / 2);
+            text_pos = Point::new(area.top_left().x + 46, start_of_baseline.y);
+            use_text = true;
+            use_icon = true;
+
+        } else if area.width() > (width + 10) {
+            use_text = true;
+        }
+        else {
+            //if we can't fit the text, retreat to centering the icon
+            icon_pos = area.center();
+            use_icon = true;
+        }
+
+        if use_text {
+            display::text(
+                text_pos,
+                self.text,
+                style.font,
+                style.text_color,
+                style.button_color,
+            );
+        }
+
+        if use_icon {
+            display::icon(
+                icon_pos,
+                self.icon,
+                style.text_color,
+                style.button_color,
+            );
+        }
     }
 }

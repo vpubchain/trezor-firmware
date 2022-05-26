@@ -35,9 +35,9 @@ impl Menu
 {
     pub fn new(bld_version: &'static str) -> Self {
 
-        let content_reboot = IconText::new("REBOOT", REBOOT, 46, 25);
-        let content_fwinfo = IconText::new("FW INFO", FWINFO, 46, 25);
-        let content_reset = IconText::new("FACTORY RESET", RESET, 46, 25);
+        let content_reboot = IconText::new("REBOOT", REBOOT);
+        let content_fwinfo = IconText::new("FW INFO", FWINFO);
+        let content_reset = IconText::new("FACTORY RESET", RESET);
 
         let mut instance = Self {
             bg: Pad::with_background(BLD_BG),
