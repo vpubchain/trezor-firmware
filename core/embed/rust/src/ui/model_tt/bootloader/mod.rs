@@ -191,6 +191,7 @@ extern "C" fn screen_connect() -> u32 {
 
     frame.place(constant::screen());
     frame.paint();
+    display::fadein();
     0
 }
 

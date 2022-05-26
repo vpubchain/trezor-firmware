@@ -282,7 +282,7 @@ int main(void) {
 
   vendor_header vhdr;
   image_header hdr;
-  secbool stay_in_bootloader = sectrue;  // flag to stay in bootloader
+  secbool stay_in_bootloader = secfalse;  // flag to stay in bootloader
 
   // detect whether the devices contains a valid firmware
 
@@ -346,51 +346,42 @@ int main(void) {
   // ... or we have stay_in_bootloader flag to force it
   if (touched || stay_in_bootloader == sectrue) {
     // no ui_fadeout(); - we already start from black screen
-    uint32_t screen = 0;
+    screen_t screen = SCREEN_INTRO;
 
     while(true){
-      uint32_t usb_result = 0xFFFFFFFF;
+      bool continue_to_firmware = false;
       uint32_t ui_result = 0;
 
       switch(screen) {
-        case 0:
+        case SCREEN_INTRO:
           ui_result = ui_screen_intro(&vhdr, &hdr);
           if (ui_result == 1){
-            ui_fadeout();
-            screen = 1;
+            screen = SCREEN_MENU;
           }
           if (ui_result == 2){
-            ui_fadeout();
-            screen_connect();
-            ui_fadein();
-            usb_result = bootloader_usb_loop(&vhdr, &hdr);
+            screen = SCREEN_WAIT_FOR_HOST;
           }
           break;
-        case 1:
+        case SCREEN_MENU:
           ui_result = ui_screen_menu();
           if (ui_result == 1){ //exit menu
-            ui_fadeout();
-            screen = 0;
+            screen = SCREEN_INTRO;
           }
           if (ui_result == 2){ //reboot
-            ui_fadeout();
-            usb_result = sectrue;
+            continue_to_firmware = true;
           }
           if (ui_result == 3){ //wipe
-            ui_fadeout();
-            screen = 2;
+            screen = SCREEN_WIPE_CONFIRM;
           }
           if (ui_result == 4){ //fw info
-            ui_fadeout();
-            screen = 3;
+            screen = SCREEN_FINGER_PRINT;
           }
           break;
-        case 2:
+        case SCREEN_WIPE_CONFIRM:
           ui_result = screen_wipe_confirm();
           if (ui_result == 1){
             //canceled
-            screen = 1;
-            ui_fadeout();
+            screen = SCREEN_MENU;
           }
           if (ui_result == 2){
             ui_fadeout();
@@ -410,22 +401,26 @@ int main(void) {
             }
           }
           break;
-        case 3:
+        case SCREEN_FINGER_PRINT:
           ui_screen_firmware_fingerprint(&hdr);
-          ui_fadeout();
-          screen = 1;
+          screen = SCREEN_MENU;
           break;
+        case SCREEN_WAIT_FOR_HOST:
+          screen_connect();
+          if (sectrue == bootloader_usb_loop(&vhdr, &hdr)){
+            continue_to_firmware = true;
+          }
+          else{
+            return 1;
+          }
         default:
           break;
       }
 
-      if (usb_result != 0xFFFFFFFF) {
-        if (usb_result == sectrue){
-          break;
-        }
-        else{
-          return 1;
-        }
+      ui_fadeout();
+
+      if (continue_to_firmware) {
+        break;
       }
     }
   }

@@ -23,6 +23,14 @@
 #include "image.h"
 #include "secbool.h"
 
+typedef enum {
+    SCREEN_INTRO = 0,
+    SCREEN_MENU = 1,
+    SCREEN_WIPE_CONFIRM = 2,
+    SCREEN_FINGER_PRINT = 3,
+    SCREEN_WAIT_FOR_HOST = 4,
+}screen_t;
+
 void ui_screen_boot(const vendor_header* const vhdr,
                     const image_header* const hdr);
 void ui_screen_boot_wait(int wait_seconds);
