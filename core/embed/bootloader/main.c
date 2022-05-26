@@ -302,9 +302,6 @@ int main(void) {
                              FIRMWARE_SECTORS, FIRMWARE_SECTORS_COUNT);
   }
 
-//  ui_fadein();
-//  hello_world("bootloader");
-//  hal_delay(1000);
 
 
   // start the bootloader if no or broken firmware found ...
@@ -336,6 +333,14 @@ int main(void) {
       return 1;
     }
   }
+
+  ensure(load_vendor_header_keys((const uint8_t *)FIRMWARE_START, &vhdr),
+         "invalid vendor header");
+  ensure(load_image_header((const uint8_t *)(FIRMWARE_START + vhdr.hdrlen),
+                           FIRMWARE_IMAGE_MAGIC, FIRMWARE_IMAGE_MAXSIZE,
+                           vhdr.vsig_m, vhdr.vsig_n, vhdr.vpub, &hdr),
+         "invalid firmware header");
+
 
   // ... or if user touched the screen on start
   // ... or we have stay_in_bootloader flag to force it
