@@ -55,6 +55,8 @@ extern "C" {
         iconlen: cty::uint32_t,
         iconfgcolor: cty::uint16_t,
     );
+    fn display_trans_start();
+    fn display_trans_exec(transition: cty::int32_t);
 }
 
 pub struct ToifInfo {
@@ -161,5 +163,17 @@ pub fn loader(
             icon.map(|i| i.len()).unwrap_or(0) as _,
             iconfgcolor,
         );
+    }
+}
+
+pub fn trans_start() {
+    unsafe {
+        display_trans_start();
+    }
+}
+
+pub fn trans_exec(transition: i32) {
+    unsafe {
+        display_trans_exec(transition);
     }
 }
