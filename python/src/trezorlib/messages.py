@@ -71,6 +71,8 @@ class MessageType(IntEnum):
     GetFirmware = 90
     FirmwareChunk = 91
     FirmwareChunkAck = 92
+    UnlockPath = 93
+    UnlockedPathRequest = 94
     SetU2FCounter = 63
     GetNextU2FCounter = 80
     NextU2FCounter = 81
@@ -3519,6 +3521,37 @@ class Nonce(protobuf.MessageType):
         nonce: "bytes",
     ) -> None:
         self.nonce = nonce
+
+
+class UnlockPath(protobuf.MessageType):
+    MESSAGE_WIRE_TYPE = 93
+    FIELDS = {
+        1: protobuf.Field("address_n", "uint32", repeated=True, required=False),
+        2: protobuf.Field("mac", "bytes", repeated=False, required=False),
+    }
+
+    def __init__(
+        self,
+        *,
+        address_n: Optional[Sequence["int"]] = None,
+        mac: Optional["bytes"] = None,
+    ) -> None:
+        self.address_n: Sequence["int"] = address_n if address_n is not None else []
+        self.mac = mac
+
+
+class UnlockedPathRequest(protobuf.MessageType):
+    MESSAGE_WIRE_TYPE = 94
+    FIELDS = {
+        1: protobuf.Field("mac", "bytes", repeated=False, required=False),
+    }
+
+    def __init__(
+        self,
+        *,
+        mac: Optional["bytes"] = None,
+    ) -> None:
+        self.mac = mac
 
 
 class DebugLinkDecision(protobuf.MessageType):

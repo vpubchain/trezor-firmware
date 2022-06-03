@@ -63,6 +63,8 @@ if TYPE_CHECKING:
         GetFirmware = 90
         FirmwareChunk = 91
         FirmwareChunkAck = 92
+        UnlockPath = 93
+        UnlockedPathRequest = 94
         SetU2FCounter = 63
         GetNextU2FCounter = 80
         NextU2FCounter = 81
