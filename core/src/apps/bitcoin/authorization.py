@@ -2,7 +2,7 @@ from micropython import const
 from typing import TYPE_CHECKING
 
 from trezor import utils, wire
-from trezor.messages import AuthorizeCoinJoin
+from trezor.messages import AuthorizeCoinJoin, GetPublicKey
 
 from apps.common import authorization
 
@@ -25,6 +25,10 @@ FEE_RATE_DECIMALS = const(8)
 class CoinJoinAuthorization:
     def __init__(self, params: AuthorizeCoinJoin) -> None:
         self.params = params
+
+    def check_get_public_key(self, msg: GetPublicKey) -> bool:
+        # Check whether the current params matches the parameters of the XPUB request.
+        return self.params.address_n == msg.address_n
 
     def check_get_ownership_proof(self, msg: GetOwnershipProof) -> bool:
         # Check whether the current params matches the parameters of the request.

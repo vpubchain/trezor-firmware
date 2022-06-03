@@ -2,20 +2,38 @@ from typing import TYPE_CHECKING
 
 from trezor import wire
 from trezor.enums import InputScriptType
-from trezor.messages import HDNodeType, PublicKey
+from trezor.messages import AuthorizeCoinJoin, HDNodeType, PublicKey, UnlockPath
 
 from apps.common import coininfo, paths
-from apps.common.keychain import get_keychain
+from apps.common.keychain import FORBIDDEN_KEY_PATH, get_keychain
+
+from . import authorization
 
 if TYPE_CHECKING:
     from trezor.messages import GetPublicKey
+    from trezor.protobuf import MessageType
 
 
-async def get_public_key(ctx: wire.Context, msg: GetPublicKey) -> PublicKey:
+async def get_public_key(
+    ctx: wire.Context, msg: GetPublicKey, auth_msg: MessageType | None = None
+) -> PublicKey:
     coin_name = msg.coin_name or "Bitcoin"
     script_type = msg.script_type or InputScriptType.SPENDADDRESS
     coin = coininfo.by_name(coin_name)
     curve_name = msg.ecdsa_curve_name or coin.curve_name
+
+    # Require preauthorization to access SLIP25 paths.
+    if msg.address_n and msg.address_n[0] == paths.SLIP25_PURPOSE:
+        if auth_msg is not None and AuthorizeCoinJoin.is_type_of(auth_msg):
+            if not authorization.from_cached_message(auth_msg).check_get_public_key(
+                msg
+            ):
+                raise wire.ProcessError("Unauthorized operation")
+        elif auth_msg is not None and UnlockPath.is_type_of(auth_msg):
+            if auth_msg.address_n != msg.address_n[: len(auth_msg.address_n)]:
+                raise FORBIDDEN_KEY_PATH
+        else:
+            raise FORBIDDEN_KEY_PATH
 
     keychain = await get_keychain(ctx, curve_name, [paths.AlwaysMatchingSchema])
 
