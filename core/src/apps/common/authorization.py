@@ -6,7 +6,11 @@ from trezor.enums import MessageType
 from trezor.utils import ensure
 
 WIRE_TYPES: dict[int, tuple[int, ...]] = {
-    MessageType.AuthorizeCoinJoin: (MessageType.SignTx, MessageType.GetOwnershipProof),
+    MessageType.AuthorizeCoinJoin: (
+        MessageType.GetOwnershipProof,
+        MessageType.GetPublicKey,
+        MessageType.SignTx,
+    ),
 }
 
 
