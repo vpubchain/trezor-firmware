@@ -285,6 +285,12 @@ sizecheck: ## check sizes of binary files
 	test $(FIRMWARE_P2_MAXSIZE) -ge $(shell wc -c < $(FIRMWARE_BUILD_DIR)/firmware.bin.p2)
 	test $(FIRMWARE_MAXSIZE) -ge $(shell wc -c < $(FIRMWARE_BUILD_DIR)/firmware.bin)
 
+check_flash_size:  # check how much free space we have in .flash sectors
+	./tools/size_checker_firmware_flash.py
+
+compare_flash_size_master:  # compares current .flash sectors with master
+	./tools/size_compare_flash_master.py
+
 combine: ## combine boardloader + bootloader + prodtest into one combined image
 	./tools/combine_firmware \
 		$(BOARDLOADER_START) $(BOARDLOADER_BUILD_DIR)/boardloader.bin \

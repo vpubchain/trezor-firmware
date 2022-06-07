@@ -8,3 +8,4 @@ tests/trezor_monero_tests*
 .coverage.*
 htmlcov/
 mypy_report
+tools/firmware_elf_size_report.txt
