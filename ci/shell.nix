@@ -73,6 +73,7 @@ stdenvNoCC.mkDerivation ({
     autoflake
     autoPatchelfHook
     bash
+    bloaty
     check
     curl  # for connect tests
     editorconfig-checker
