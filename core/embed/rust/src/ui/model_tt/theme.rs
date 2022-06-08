@@ -13,11 +13,11 @@ pub const FONT_BOLD: Font = Font::new(-2);
 pub const FONT_MONO: Font = Font::new(-3);
 
 // Typical backlight values.
-pub const BACKLIGHT_NORMAL: i32 = 150;
-pub const BACKLIGHT_LOW: i32 = 45;
-pub const BACKLIGHT_DIM: i32 = 5;
-pub const BACKLIGHT_NONE: i32 = 2;
-pub const BACKLIGHT_MAX: i32 = 255;
+pub const BACKLIGHT_NORMAL: u32 = 150;
+pub const BACKLIGHT_LOW: u32 = 45;
+pub const BACKLIGHT_DIM: u32 = 5;
+pub const BACKLIGHT_NONE: u32 = 2;
+pub const BACKLIGHT_MAX: u32 = 255;
 
 // Color palette.
 pub const WHITE: Color = Color::rgb(255, 255, 255);

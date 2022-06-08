@@ -6,30 +6,31 @@ use crate::{
 
 use super::geometry::{Offset, Point, Rect};
 
-pub fn backlight() -> i32 {
-    display::backlight(-1)
+pub fn backlight() -> u32 {
+    display::backlight(-1) as u32
 }
 
-pub fn set_backlight(val: i32) {
-    display::backlight(val);
+pub fn set_backlight(val: u32) {
+    display::backlight(val as i32);
 }
 
-pub fn fade_backlight(target: i32) {
-    const BACKLIGHT_DELAY: Duration = Duration::from_millis(14);
-    const BACKLIGHT_STEP: usize = 15;
+pub fn fade_backlight(target: u32) {
+    const FADE_DURATION_MS: u32 = 50;
+    fade_backlight_duration(target, FADE_DURATION_MS);
+}
 
-    let current = backlight();
-    if current < target {
-        for val in (current..target).step_by(BACKLIGHT_STEP) {
-            set_backlight(val);
-            time::sleep(BACKLIGHT_DELAY);
-        }
-    } else {
-        for val in (target..current).rev().step_by(BACKLIGHT_STEP) {
-            set_backlight(val);
-            time::sleep(BACKLIGHT_DELAY);
-        }
+pub fn fade_backlight_duration(target: u32, duration_ms: u32) {
+    let target = target as i32;
+    let duration_ms = duration_ms as i32;
+    let current = backlight() as i32;
+    let step = (target - current) / duration_ms;
+
+    for i in 0..duration_ms {
+        set_backlight((current + i * step) as u32);
+        time::sleep(Duration::from_millis(1));
     }
+    // account for imprecise rounding
+    set_backlight(target as u32);
 }
 
 pub fn rect_fill(r: Rect, fg_color: Color) {

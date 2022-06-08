@@ -14,7 +14,7 @@ pub struct SwipePage<T, U> {
     pad: Pad,
     swipe: Swipe,
     scrollbar: ScrollBar,
-    fade: Option<i32>,
+    fade: Option<u32>,
 }
 
 impl<T, U> SwipePage<T, U>
