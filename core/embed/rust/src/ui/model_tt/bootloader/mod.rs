@@ -1,6 +1,5 @@
 use core::slice;
 
-use crate::time::Duration;
 use crate::trezorhal::io::{io_touch_read, io_touch_unpack_x, io_touch_unpack_y};
 use crate::ui::component::{Component, Event, EventCtx};
 use crate::ui::display;
@@ -21,7 +20,7 @@ mod title;
 use crate::ui::component::text::paragraphs::Paragraphs;
 use crate::ui::geometry::LinearPlacement;
 use crate::ui::model_tt::bootloader::connect::Connect;
-use crate::ui::model_tt::theme::FONT_NORMAL;
+use crate::ui::model_tt::theme::{FONT_NORMAL, BACKLIGHT_NORMAL, BACKLIGHT_DIM};
 use confirm::Confirm;
 use fwinfo::FwInfo;
 use intro::Intro;
@@ -36,11 +35,11 @@ pub struct BootloaderLayout<F> {
 }
 
 fn fadein() {
-    display::fade(0, constant::BACKLIGHT_NORMAL, Duration::from_millis(1000));
+    display::fade_backlight_duration(BACKLIGHT_NORMAL, 1000);
 }
 
 fn fadeout() {
-    display::fade(constant::BACKLIGHT_NORMAL, 0, Duration::from_millis(1000));
+    display::fade_backlight_duration(BACKLIGHT_DIM, 1000);
 }
 
 impl<F> BootloaderLayout<F>
