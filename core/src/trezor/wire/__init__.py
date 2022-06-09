@@ -136,6 +136,48 @@ PROTOBUF_BUFFER_SIZE = 8192
 
 WIRE_BUFFER = bytearray(PROTOBUF_BUFFER_SIZE)
 
+# The wire buffer is shared between the main wire interface and debuglink.
+# There's no obvious guarantee that both interfaces won't use it at the same
+# time, thus we check this at runtime in debug builds.
+if __debug__:
+
+    WIRE_BUFFER_IN_USE = False
+
+    class BufferLock:  # type: ignore [Class declaration "BufferLock" is obscured by a declaration of the same name]
+        def __init__(self, buffer: bytearray, min_size: int = 1) -> None:
+            self.min_size = min_size
+            self.buffer = buffer
+            self.using_shared_buffer = False
+
+        def __enter__(self) -> bytearray:
+            global WIRE_BUFFER_IN_USE
+            if WIRE_BUFFER_IN_USE or len(self.buffer) < self.min_size:
+                return bytearray(self.min_size)
+            elif self.buffer is WIRE_BUFFER:
+                WIRE_BUFFER_IN_USE = True
+            return self.buffer
+
+        def __exit__(self, exc_type: Any, value: Any, traceback: Any) -> None:
+            if self.buffer is WIRE_BUFFER:
+                global WIRE_BUFFER_IN_USE
+                WIRE_BUFFER_IN_USE = False
+
+else:
+
+    class BufferLock:
+        def __init__(self, buffer: bytearray, min_size: int = 1) -> None:
+            self.min_size = min_size
+            self.buffer = buffer
+
+        def __enter__(self) -> bytearray:
+            if len(self.buffer) < self.min_size:
+                return bytearray(self.min_size)
+            else:
+                return self.buffer
+
+        def __exit__(self, exc_type: Any, value: Any, traceback: Any) -> None:
+            pass
+
 
 class Context:
     def __init__(self, iface: WireInterface, sid: int, buffer: bytearray) -> None:
@@ -159,8 +201,8 @@ class Context:
         del msg
         return await self.read_any(expected_wire_types)
 
-    def read_from_wire(self) -> Awaitable[codec_v1.Message]:
-        return codec_v1.read_message(self.iface, self.buffer)
+    def read_from_wire(self, buffer: bytearray) -> Awaitable[codec_v1.Message]:
+        return codec_v1.read_message(self.iface, buffer)
 
     async def read(self, expected_type: type[LoadedMessageType]) -> LoadedMessageType:
         if __debug__:
@@ -172,27 +214,28 @@ class Context:
                 expected_type.MESSAGE_NAME,
             )
 
-        # Load the full message into a buffer, parse out type and data payload
-        msg = await self.read_from_wire()
+        with BufferLock(self.buffer) as buffer:
+            # Load the full message into a buffer, parse out type and data payload
+            msg = await self.read_from_wire(buffer)
 
-        # If we got a message with unexpected type, raise the message via
-        # `UnexpectedMessageError` and let the session handler deal with it.
-        if msg.type != expected_type.MESSAGE_WIRE_TYPE:
-            raise UnexpectedMessageError(msg)
+            # If we got a message with unexpected type, raise the message via
+            # `UnexpectedMessageError` and let the session handler deal with it.
+            if msg.type != expected_type.MESSAGE_WIRE_TYPE:
+                raise UnexpectedMessageError(msg)
 
-        if __debug__:
-            log.debug(
-                __name__,
-                "%s:%x read: %s",
-                self.iface.iface_num(),
-                self.sid,
-                expected_type.MESSAGE_NAME,
-            )
+            if __debug__:
+                log.debug(
+                    __name__,
+                    "%s:%x read: %s",
+                    self.iface.iface_num(),
+                    self.sid,
+                    expected_type.MESSAGE_NAME,
+                )
 
-        workflow.idle_timer.touch()
+            workflow.idle_timer.touch()
 
-        # look up the protobuf class and parse the message
-        return _wrap_protobuf_load(msg.data, expected_type)
+            # look up the protobuf class and parse the message
+            return _wrap_protobuf_load(msg.data, expected_type)
 
     async def read_any(
         self, expected_wire_types: Iterable[int]
@@ -206,30 +249,31 @@ class Context:
                 expected_wire_types,
             )
 
-        # Load the full message into a buffer, parse out type and data payload
-        msg = await self.read_from_wire()
+        with BufferLock(self.buffer) as buffer:
+            # Load the full message into a buffer, parse out type and data payload
+            msg = await self.read_from_wire(buffer)
 
-        # If we got a message with unexpected type, raise the message via
-        # `UnexpectedMessageError` and let the session handler deal with it.
-        if msg.type not in expected_wire_types:
-            raise UnexpectedMessageError(msg)
+            # If we got a message with unexpected type, raise the message via
+            # `UnexpectedMessageError` and let the session handler deal with it.
+            if msg.type not in expected_wire_types:
+                raise UnexpectedMessageError(msg)
 
-        # find the protobuf type
-        exptype = protobuf.type_for_wire(msg.type)
+            # find the protobuf type
+            exptype = protobuf.type_for_wire(msg.type)
 
-        if __debug__:
-            log.debug(
-                __name__,
-                "%s:%x read: %s",
-                self.iface.iface_num(),
-                self.sid,
-                exptype.MESSAGE_NAME,
-            )
+            if __debug__:
+                log.debug(
+                    __name__,
+                    "%s:%x read: %s",
+                    self.iface.iface_num(),
+                    self.sid,
+                    exptype.MESSAGE_NAME,
+                )
 
-        workflow.idle_timer.touch()
+            workflow.idle_timer.touch()
 
-        # parse the message and return it
-        return _wrap_protobuf_load(msg.data, exptype)
+            # parse the message and return it
+            return _wrap_protobuf_load(msg.data, exptype)
 
     async def write(self, msg: protobuf.MessageType) -> None:
         if __debug__:
@@ -246,20 +290,14 @@ class Context:
 
         msg_size = protobuf.encoded_length(msg)
 
-        if msg_size <= len(self.buffer):
-            # reuse preallocated
-            buffer = self.buffer
-        else:
-            # message is too big, we need to allocate a new buffer
-            buffer = bytearray(msg_size)
+        with BufferLock(self.buffer, msg_size) as buffer:
+            msg_size = protobuf.encode(buffer, msg)
 
-        msg_size = protobuf.encode(buffer, msg)
-
-        await codec_v1.write_message(
-            self.iface,
-            msg.MESSAGE_WIRE_TYPE,
-            memoryview(buffer)[:msg_size],
-        )
+            await codec_v1.write_message(
+                self.iface,
+                msg.MESSAGE_WIRE_TYPE,
+                memoryview(buffer)[:msg_size],
+            )
 
     def wait(self, *tasks: Awaitable) -> Any:
         """
@@ -394,44 +432,45 @@ async def handle_session(
     modules = utils.unimport_begin()
     while True:
         try:
-            if next_msg is None:
-                # If the previous run did not keep an unprocessed message for us,
-                # wait for a new one coming from the wire.
+            with BufferLock(WIRE_BUFFER) as buffer:
+                if next_msg is None:
+                    # If the previous run did not keep an unprocessed message for us,
+                    # wait for a new one coming from the wire.
+                    try:
+                        msg = await ctx.read_from_wire(buffer)
+                    except codec_v1.CodecError as exc:
+                        if __debug__:
+                            log.exception(__name__, exc)
+                        await ctx.write(failure(exc))
+                        continue
+
+                else:
+                    # Process the message from previous run.
+                    msg = next_msg
+                    next_msg = None
+
                 try:
-                    msg = await ctx.read_from_wire()
-                except codec_v1.CodecError as exc:
+                    next_msg = await _handle_single_message(
+                        ctx, msg, use_workflow=not is_debug_session
+                    )
+                except Exception as exc:
+                    # Log and ignore. The session handler can only exit explicitly in the
+                    # following finally block.
                     if __debug__:
                         log.exception(__name__, exc)
-                    await ctx.write(failure(exc))
-                    continue
+                finally:
+                    if not __debug__ or not is_debug_session:
+                        # Unload modules imported by the workflow.  Should not raise.
+                        # This is not done for the debug session because the snapshot taken
+                        # in a debug session would clear modules which are in use by the
+                        # workflow running on wire.
+                        utils.unimport_end(modules)
 
-            else:
-                # Process the message from previous run.
-                msg = next_msg
-                next_msg = None
-
-            try:
-                next_msg = await _handle_single_message(
-                    ctx, msg, use_workflow=not is_debug_session
-                )
-            except Exception as exc:
-                # Log and ignore. The session handler can only exit explicitly in the
-                # following finally block.
-                if __debug__:
-                    log.exception(__name__, exc)
-            finally:
-                if not __debug__ or not is_debug_session:
-                    # Unload modules imported by the workflow.  Should not raise.
-                    # This is not done for the debug session because the snapshot taken
-                    # in a debug session would clear modules which are in use by the
-                    # workflow running on wire.
-                    utils.unimport_end(modules)
-
-                    if next_msg is None and msg.type not in AVOID_RESTARTING_FOR:
-                        # Shut down the loop if there is no next message waiting.
-                        # Let the session be restarted from `main`.
-                        loop.clear()
-                        return  # pylint: disable=lost-exception
+                        if next_msg is None and msg.type not in AVOID_RESTARTING_FOR:
+                            # Shut down the loop if there is no next message waiting.
+                            # Let the session be restarted from `main`.
+                            loop.clear()
+                            return  # pylint: disable=lost-exception
 
         except Exception as exc:
             # Log and try again. The session handler can only exit explicitly via
