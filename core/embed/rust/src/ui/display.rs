@@ -198,6 +198,41 @@ impl TextOverlay {
     }
 }
 
+pub fn rect_rounded2_get_pixel(
+    x: i32,
+    y: i32,
+    w: i32,
+    h: i32,
+    colortable: [Color;16],
+    fill: bool,
+    line_width: i32,
+) -> Color {
+    let border = (x >= 0 && x < line_width)
+        || ((x >= w - line_width) && x <= (w - 1))
+        || (y >= 0 && y < line_width)
+        || ((y >= h - line_width) && y <= (h - 1));
+
+    let corner_lim = 2 * line_width;
+    let corner_inner = line_width;
+
+    let corner_all = ((x > w - (corner_lim + 1)) || x < corner_lim)
+        && (y < corner_lim || y > h - (corner_lim + 1));
+
+    let corner = corner_all
+        && (y >= corner_inner)
+        && (x >= corner_inner)
+        && (y <= h - (corner_inner + 1))
+        && (x <= w - (corner_inner + 1));
+
+    let corner_out = corner_all && !corner;
+
+    if (border || corner || fill) && !corner_out {
+        colortable[15]
+    } else {
+        colortable[0]
+    }
+}
+
 pub fn bar_with_text_and_fill(
     area: Rect,
     overlay: Option<TextOverlay>,
@@ -208,6 +243,7 @@ pub fn bar_with_text_and_fill(
 ) {
     let r = adjust_offset(area);
     let clamped = clamp_coords(r);
+    let colortable = get_color_table(fg_color, bg_color);
 
     set_window(clamped);
 
@@ -220,22 +256,8 @@ pub fn bar_with_text_and_fill(
                 (x >= fill_from && fill_from >= 0 && (x <= fill_to || fill_to < fill_from))
                     || (x < fill_to && fill_to >= 0);
 
-            let border = x == 0 || x == (r.width() - 1) || y == 0 || y == (r.height() - 1);
-
-            let corner = (y == r.height() - 2 || y == 1) && x == 1
-                || (x == r.width() - 2 && y == 1)
-                || (x == r.width() - 2 && y == r.height() - 2);
-
-            let corner_out = !corner
-                && (((y > r.height() - 3 || y < 2) && x < 2)
-                    || ((x > r.width() - 3) && y < 2)
-                    || (x > r.width() - 3 && y > r.height() - 3));
-
-            let underlying_color = if (border || corner || filled) && !corner_out {
-                fg_color
-            } else {
-                bg_color
-            };
+            let underlying_color =
+                rect_rounded2_get_pixel(x, y, r.width(), r.height(), colortable, filled, 1);
 
             let mut overlay_color = None;
             if let Some(o) = overlay {
