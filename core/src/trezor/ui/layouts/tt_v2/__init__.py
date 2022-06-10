@@ -1,100 +1,17 @@
 from typing import TYPE_CHECKING
 
-from trezor import io, log, loop, ui, wire, workflow
+from trezor import log, ui, wire
 from trezor.enums import ButtonRequestType
 
 import trezorui2
 
 from ...constants.tt import MONO_ADDR_PER_LINE
-from ..common import button_request, interact
+from ..common import RustLayout, button_request, interact
 
 if TYPE_CHECKING:
     from typing import Any, Awaitable, Iterable, NoReturn, Sequence
 
     from ..common import PropertyType, ExceptionType
-
-
-class _RustLayout(ui.Layout):
-    # pylint: disable=super-init-not-called
-    def __init__(self, layout: Any):
-        super().__init__()
-        self.layout = layout
-        self.timer = loop.Timer()
-
-    def set_timer(self, token: int, deadline: int) -> None:
-        self.timer.schedule(deadline, token)
-
-    if __debug__:
-
-        def create_tasks(self) -> tuple[loop.AwaitableTask, ...]:
-            from apps.debug import confirm_signal, input_signal
-
-            return (
-                self.handle_timers(),
-                self.handle_input_and_rendering(),
-                confirm_signal(),
-                input_signal(),
-            )
-
-        def read_content(self) -> list[str]:
-            result = []
-
-            def callback(*args):
-                for arg in args:
-                    result.append(str(arg))
-
-            self.layout.trace(callback)
-            result = " ".join(result).split("\n")
-            return result
-
-    else:
-
-        def create_tasks(self) -> tuple[loop.AwaitableTask, ...]:
-            return self.handle_timers(), self.handle_input_and_rendering()
-
-    def _before_render(self) -> None:
-        # Clear the screen of any leftovers.
-        ui.backlight_fade(ui.style.BACKLIGHT_DIM)
-        ui.display.clear()
-
-        if __debug__ and self.should_notify_layout_change:
-            from apps.debug import notify_layout_change
-
-            # notify about change and do not notify again until next await.
-            # (handle_rendering might be called multiple times in a single await,
-            # because of the endless loop in __iter__)
-            self.should_notify_layout_change = False
-            notify_layout_change(self)
-
-        # Turn the brightness on again.
-        ui.backlight_fade(self.BACKLIGHT_LEVEL)
-
-    def handle_input_and_rendering(self) -> loop.Task:  # type: ignore [awaitable-is-generator]
-        touch = loop.wait(io.TOUCH)
-        self._before_render()
-        self.layout.attach_timer_fn(self.set_timer)
-        self.layout.paint()
-        # self.layout.bounds()
-        while True:
-            # Using `yield` instead of `await` to avoid allocations.
-            event, x, y = yield touch
-            workflow.idle_timer.touch()
-            msg = None
-            if event in (io.TOUCH_START, io.TOUCH_MOVE, io.TOUCH_END):
-                msg = self.layout.touch_event(event, x, y)
-            self.layout.paint()
-            # self.layout.bounds()
-            if msg is not None:
-                raise ui.Result(msg)
-
-    def handle_timers(self) -> loop.Task:  # type: ignore [awaitable-is-generator]
-        while True:
-            # Using `yield` instead of `await` to avoid allocations.
-            token = yield self.timer
-            msg = self.layout.timer(token)
-            self.layout.paint()
-            if msg is not None:
-                raise ui.Result(msg)
 
 
 async def confirm_action(
@@ -134,7 +51,7 @@ async def confirm_action(
 
     result = await interact(
         ctx,
-        _RustLayout(
+        RustLayout(
             trezorui2.confirm_action(
                 title=title.upper(),
                 action=action,
@@ -504,7 +421,7 @@ async def request_passphrase_on_device(ctx: wire.GenericContext, max_len: int) -
         ctx, "passphrase_device", code=ButtonRequestType.PassphraseEntry
     )
 
-    keyboard = _RustLayout(
+    keyboard = RustLayout(
         trezorui2.request_passphrase(prompt="Enter passphrase", max_len=max_len)
     )
     result = await ctx.wait(keyboard)
@@ -534,7 +451,7 @@ async def request_pin_on_device(
         prompt = "Enter PIN"
         subprompt = f"{attempts_remaining} tries left"
 
-    dialog = _RustLayout(
+    dialog = RustLayout(
         trezorui2.request_pin(
             prompt=prompt,
             subprompt=subprompt,
