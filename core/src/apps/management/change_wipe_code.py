@@ -53,7 +53,7 @@ async def change_wipe_code(ctx: wire.Context, msg: ChangeWipeCode) -> Success:
         msg_screen = "You have successfully disabled the wipe code."
         msg_wire = "Wipe code removed"
 
-    await show_success(ctx, "success_wipe_code", msg_screen)
+    await show_success("success_wipe_code", msg_screen)
     return Success(message=msg_wire)
 
 
@@ -62,7 +62,6 @@ def _require_confirm_action(
 ) -> Awaitable[None]:
     if msg.remove and has_wipe_code:
         return confirm_action(
-            ctx,
             "disable_wipe_code",
             title="Disable wipe code",
             description="Do you really want to",
@@ -73,7 +72,6 @@ def _require_confirm_action(
 
     if not msg.remove and has_wipe_code:
         return confirm_action(
-            ctx,
             "change_wipe_code",
             title="Change wipe code",
             description="Do you really want to",
@@ -84,7 +82,6 @@ def _require_confirm_action(
 
     if not msg.remove and not has_wipe_code:
         return confirm_action(
-            ctx,
             "set_wipe_code",
             title="Set wipe code",
             description="Do you really want to",

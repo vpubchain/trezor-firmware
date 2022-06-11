@@ -50,7 +50,6 @@ async def request_word(
 
 
 async def show_remaining_shares(
-    ctx: wire.GenericContext,
     groups: Iterable[tuple[int, tuple[str, ...]]],  # remaining + list 3 words
     shares_remaining: list[int],
     group_threshold: int,
@@ -83,13 +82,11 @@ async def show_remaining_shares(
 
     pages[-1] = Confirm(pages[-1], cancel=None)
     await raise_if_cancelled(
-        interact(ctx, Paginated(pages), "show_shares", ButtonRequestType.Other)
+        interact(Paginated(pages), "show_shares", ButtonRequestType.Other)
     )
 
 
-async def show_group_share_success(
-    ctx: wire.GenericContext, share_index: int, group_index: int
-) -> None:
+async def show_group_share_success(share_index: int, group_index: int) -> None:
     text = Text("Success", ui.ICON_CONFIRM)
     text.bold("You have entered")
     text.bold(f"Share {share_index + 1}")
@@ -98,7 +95,6 @@ async def show_group_share_success(
 
     await raise_if_cancelled(
         interact(
-            ctx,
             Confirm(text, confirm="Continue", cancel=None),
             "share_success",
             ButtonRequestType.Other,
@@ -126,9 +122,9 @@ async def continue_recovery(
     else:
         return is_confirmed(
             await interact(
-                ctx,
                 Confirm(homepage, confirm=button_label, major_confirm=True),
                 "recovery",
                 ButtonRequestType.RecoveryHomepage,
+                ctx=ctx,
             )
         )

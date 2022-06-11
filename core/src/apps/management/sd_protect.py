@@ -85,9 +85,7 @@ async def sd_protect_enable(ctx: wire.Context, msg: SdProtect) -> Success:
 
     storage.device.set_sd_salt_auth_key(salt_auth_key)
 
-    await show_success(
-        ctx, "success_sd", "You have successfully enabled SD protection."
-    )
+    await show_success("success_sd", "You have successfully enabled SD protection.")
     return Success(message="SD card protection enabled")
 
 
@@ -119,9 +117,7 @@ async def sd_protect_disable(ctx: wire.Context, msg: SdProtect) -> Success:
         # because overall SD-protection was successfully disabled.
         pass
 
-    await show_success(
-        ctx, "success_sd", "You have successfully disabled SD protection."
-    )
+    await show_success("success_sd", "You have successfully disabled SD protection.")
     return Success(message="SD card protection disabled")
 
 
@@ -156,9 +152,7 @@ async def sd_protect_refresh(ctx: wire.Context, msg: SdProtect) -> Success:
         # SD-protection was successfully refreshed.
         pass
 
-    await show_success(
-        ctx, "success_sd", "You have successfully refreshed SD protection."
-    )
+    await show_success("success_sd", "You have successfully refreshed SD protection.")
     return Success(message="SD card protection refreshed")
 
 
@@ -172,4 +166,4 @@ def require_confirm_sd_protect(ctx: wire.Context, msg: SdProtect) -> Awaitable[N
     else:
         raise wire.ProcessError("Unknown operation")
 
-    return confirm_action(ctx, "set_sd", "SD card protection", description=text)
+    return confirm_action("set_sd", "SD card protection", description=text)

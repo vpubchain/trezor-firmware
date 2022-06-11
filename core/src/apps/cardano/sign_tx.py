@@ -162,9 +162,9 @@ POOL_REGISTRATION_CERTIFICATE_ITEMS_COUNT = 10
 async def sign_tx(
     ctx: wire.Context, msg: CardanoSignTxInit, keychain: seed.Keychain
 ) -> CardanoSignTxFinished:
-    await show_transaction_signing_mode(ctx, msg.signing_mode)
+    await show_transaction_signing_mode(msg.signing_mode)
 
-    is_network_id_verifiable = await _validate_tx_signing_request(ctx, msg)
+    is_network_id_verifiable = await _validate_tx_signing_request(msg)
 
     # inputs, outputs and fee are mandatory fields, count the number of optional fields present
     tx_body_map_item_count = 3 + sum(
@@ -190,14 +190,13 @@ async def sign_tx(
     )
     tx_dict.start(hash_fn)
     with tx_dict:
-        await _process_transaction(ctx, msg, keychain, tx_dict, account_path_checker)
+        await _process_transaction(msg, keychain, tx_dict, account_path_checker)
 
     tx_hash = hash_fn.digest()
-    await _confirm_transaction(ctx, msg, is_network_id_verifiable, tx_hash)
+    await _confirm_transaction(msg, is_network_id_verifiable, tx_hash)
 
     try:
         response_after_witness_requests = await _process_witness_requests(
-            ctx,
             keychain,
             tx_hash,
             msg.witness_requests_count,
@@ -217,9 +216,7 @@ async def sign_tx(
         raise wire.ProcessError("Signing failed")
 
 
-async def _validate_tx_signing_request(
-    ctx: wire.Context, msg: CardanoSignTxInit
-) -> bool:
+async def _validate_tx_signing_request(msg: CardanoSignTxInit) -> bool:
     """Validate the data in the signing request and return whether the provided network id is verifiable."""
     if msg.fee > LOVELACE_MAX_SUPPLY:
         raise wire.ProcessError("Fee is out of range!")
@@ -227,7 +224,7 @@ async def _validate_tx_signing_request(
 
     is_network_id_verifiable = _is_network_id_verifiable(msg)
     if not is_network_id_verifiable:
-        await show_warning_tx_network_unverifiable(ctx)
+        await show_warning_tx_network_unverifiable()
 
     if msg.signing_mode == CardanoTxSigningMode.POOL_REGISTRATION_AS_OWNER:
         _validate_stake_pool_registration_tx_structure(msg)
@@ -242,9 +239,9 @@ async def _validate_tx_signing_request(
     if msg.signing_mode == CardanoTxSigningMode.PLUTUS_TRANSACTION:
         # these items should be present if a Plutus script should be executed
         if msg.script_data_hash is None:
-            await show_warning_no_script_data_hash(ctx)
+            await show_warning_no_script_data_hash()
         if msg.collateral_inputs_count == 0:
-            await show_warning_no_collateral_inputs(ctx)
+            await show_warning_no_collateral_inputs()
     else:
         # these items are only allowed in PLUTUS_TRANSACTION
         if msg.collateral_inputs_count != 0 or msg.required_signers_count != 0:
@@ -254,7 +251,6 @@ async def _validate_tx_signing_request(
 
 
 async def _process_transaction(
-    ctx: wire.Context,
     msg: CardanoSignTxInit,
     keychain: seed.Keychain,
     tx_dict: HashBuilderDict,
@@ -262,12 +258,11 @@ async def _process_transaction(
 ) -> None:
     inputs_list: HashBuilderList[tuple[bytes, int]] = HashBuilderList(msg.inputs_count)
     with tx_dict.add(TX_BODY_KEY_INPUTS, inputs_list):
-        await _process_inputs(ctx, inputs_list, msg.inputs_count, msg.signing_mode)
+        await _process_inputs(inputs_list, msg.inputs_count, msg.signing_mode)
 
     outputs_list: HashBuilderList = HashBuilderList(msg.outputs_count)
     with tx_dict.add(TX_BODY_KEY_OUTPUTS, outputs_list):
         await _process_outputs(
-            ctx,
             keychain,
             outputs_list,
             msg.outputs_count,
@@ -286,7 +281,6 @@ async def _process_transaction(
         certificates_list: HashBuilderList = HashBuilderList(msg.certificates_count)
         with tx_dict.add(TX_BODY_KEY_CERTIFICATES, certificates_list):
             await _process_certificates(
-                ctx,
                 keychain,
                 certificates_list,
                 msg.certificates_count,
@@ -302,7 +296,6 @@ async def _process_transaction(
         )
         with tx_dict.add(TX_BODY_KEY_WITHDRAWALS, withdrawals_dict):
             await _process_withdrawals(
-                ctx,
                 keychain,
                 withdrawals_dict,
                 msg.withdrawals_count,
@@ -314,7 +307,6 @@ async def _process_transaction(
 
     if msg.has_auxiliary_data:
         await _process_auxiliary_data(
-            ctx,
             keychain,
             tx_dict,
             msg.protocol_magic,
@@ -329,10 +321,10 @@ async def _process_transaction(
             msg.minting_asset_groups_count, INVALID_TOKEN_BUNDLE_MINT
         )
         with tx_dict.add(TX_BODY_KEY_MINT, minting_dict):
-            await _process_minting(ctx, minting_dict)
+            await _process_minting(minting_dict)
 
     if msg.script_data_hash is not None:
-        await _process_script_data_hash(ctx, tx_dict, msg.script_data_hash)
+        await _process_script_data_hash(tx_dict, msg.script_data_hash)
 
     if msg.collateral_inputs_count > 0:
         collateral_inputs_list: HashBuilderList[tuple[bytes, int]] = HashBuilderList(
@@ -340,7 +332,6 @@ async def _process_transaction(
         )
         with tx_dict.add(TX_BODY_KEY_COLLATERAL_INPUTS, collateral_inputs_list):
             await _process_collateral_inputs(
-                ctx,
                 collateral_inputs_list,
                 msg.collateral_inputs_count,
             )
@@ -351,7 +342,6 @@ async def _process_transaction(
         )
         with tx_dict.add(TX_BODY_KEY_REQUIRED_SIGNERS, required_signers_list):
             await _process_required_signers(
-                ctx,
                 keychain,
                 required_signers_list,
                 msg.required_signers_count,
@@ -362,7 +352,6 @@ async def _process_transaction(
 
 
 async def _confirm_transaction(
-    ctx: wire.Context,
     msg: CardanoSignTxInit,
     is_network_id_verifiable: bool,
     tx_hash: bytes,
@@ -372,7 +361,6 @@ async def _confirm_transaction(
         CardanoTxSigningMode.MULTISIG_TRANSACTION,
     ):
         await confirm_transaction(
-            ctx,
             msg.fee,
             msg.network_id,
             msg.protocol_magic,
@@ -386,7 +374,6 @@ async def _confirm_transaction(
         # a trusted device (in case the tx contains many items which are tedious to check one by
         # one on the Trezor screen)
         await confirm_transaction(
-            ctx,
             msg.fee,
             msg.network_id,
             msg.protocol_magic,
@@ -397,30 +384,29 @@ async def _confirm_transaction(
         )
     elif msg.signing_mode == CardanoTxSigningMode.POOL_REGISTRATION_AS_OWNER:
         await confirm_stake_pool_registration_final(
-            ctx, msg.protocol_magic, msg.ttl, msg.validity_interval_start
+            msg.protocol_magic, msg.ttl, msg.validity_interval_start
         )
     else:
         raise RuntimeError  # we didn't cover all signing modes
 
 
 async def _process_inputs(
-    ctx: wire.Context,
     inputs_list: HashBuilderList[tuple[bytes, int]],
     inputs_count: int,
     signing_mode: CardanoTxSigningMode,
 ) -> None:
     """Read, validate and serialize the inputs."""
+    ctx = wire.get_context()
     for _ in range(inputs_count):
         input: CardanoTxInput = await ctx.call(CardanoTxItemAck(), CardanoTxInput)
         _validate_input(input)
         if signing_mode == CardanoTxSigningMode.PLUTUS_TRANSACTION:
-            await confirm_input(ctx, input)
+            await confirm_input(input=input)
 
         inputs_list.append((input.prev_hash, input.prev_index))
 
 
 async def _process_outputs(
-    ctx: wire.Context,
     keychain: seed.Keychain,
     outputs_list: HashBuilderList,
     outputs_count: int,
@@ -430,6 +416,7 @@ async def _process_outputs(
     account_path_checker: AccountPathChecker,
 ) -> None:
     """Read, validate, confirm and serialize the outputs, return the total non-change output amount."""
+    ctx = wire.get_context()
     total_amount = 0
     for _ in range(outputs_count):
         output: CardanoTxOutput = await ctx.call(CardanoTxItemAck(), CardanoTxOutput)
@@ -444,7 +431,6 @@ async def _process_outputs(
         should_show_output = _should_show_output(output, signing_mode)
         if should_show_output:
             await _show_output(
-                ctx,
                 keychain,
                 output,
                 protocol_magic,
@@ -475,7 +461,6 @@ async def _process_outputs(
                     )
                     with output_value_list.append(asset_groups_dict):
                         await _process_asset_groups(
-                            ctx,
                             asset_groups_dict,
                             output.asset_groups_count,
                             should_show_output,
@@ -490,12 +475,12 @@ async def _process_outputs(
 
 
 async def _process_asset_groups(
-    ctx: wire.Context,
     asset_groups_dict: HashBuilderDict[bytes, HashBuilderDict[bytes, int]],
     asset_groups_count: int,
     should_show_tokens: bool,
 ) -> None:
     """Read, validate and serialize the asset groups of an output."""
+    ctx = wire.get_context()
     for _ in range(asset_groups_count):
         asset_group: CardanoAssetGroup = await ctx.call(
             CardanoTxItemAck(), CardanoAssetGroup
@@ -507,7 +492,6 @@ async def _process_asset_groups(
         )
         with asset_groups_dict.add(asset_group.policy_id, tokens):
             await _process_tokens(
-                ctx,
                 tokens,
                 asset_group.policy_id,
                 asset_group.tokens_count,
@@ -516,25 +500,24 @@ async def _process_asset_groups(
 
 
 async def _process_tokens(
-    ctx: wire.Context,
     tokens_dict: HashBuilderDict[bytes, int],
     policy_id: bytes,
     tokens_count: int,
     should_show_tokens: bool,
 ) -> None:
     """Read, validate, confirm and serialize the tokens of an asset group."""
+    ctx = wire.get_context()
     for _ in range(tokens_count):
         token: CardanoToken = await ctx.call(CardanoTxItemAck(), CardanoToken)
         _validate_token(token)
         if should_show_tokens:
-            await confirm_sending_token(ctx, policy_id, token)
+            await confirm_sending_token(policy_id, token)
 
         assert token.amount is not None  # _validate_token
         tokens_dict.add(token.asset_name_bytes, token.amount)
 
 
 async def _process_certificates(
-    ctx: wire.Context,
     keychain: seed.Keychain,
     certificates_list: HashBuilderList,
     certificates_count: int,
@@ -544,6 +527,7 @@ async def _process_certificates(
     account_path_checker: AccountPathChecker,
 ) -> None:
     """Read, validate, confirm and serialize the certificates."""
+    ctx = wire.get_context()
     for _ in range(certificates_count):
         certificate: CardanoTxCertificate = await ctx.call(
             CardanoTxItemAck(), CardanoTxCertificate
@@ -551,7 +535,7 @@ async def _process_certificates(
         validate_certificate(
             certificate, signing_mode, protocol_magic, network_id, account_path_checker
         )
-        await _show_certificate(ctx, certificate, signing_mode, network_id)
+        await _show_certificate(certificate, signing_mode, network_id)
 
         if certificate.type == CardanoCertificateType.STAKE_POOL_REGISTRATION:
             pool_parameters = certificate.pool_parameters
@@ -571,7 +555,6 @@ async def _process_certificates(
                 )
                 with pool_items_list.append(pool_owners_list):
                     await _process_pool_owners(
-                        ctx,
                         keychain,
                         pool_owners_list,
                         pool_parameters.owners_count,
@@ -585,7 +568,7 @@ async def _process_certificates(
                 )
                 with pool_items_list.append(relays_list):
                     await _process_pool_relays(
-                        ctx, relays_list, pool_parameters.relays_count
+                        relays_list, pool_parameters.relays_count
                     )
 
                 pool_items_list.append(cborize_pool_metadata(pool_parameters.metadata))
@@ -594,7 +577,6 @@ async def _process_certificates(
 
 
 async def _process_pool_owners(
-    ctx: wire.Context,
     keychain: seed.Keychain,
     pool_owners_list: HashBuilderList[bytes],
     owners_count: int,
@@ -602,11 +584,12 @@ async def _process_pool_owners(
     network_id: int,
     account_path_checker: AccountPathChecker,
 ) -> None:
+    ctx = wire.get_context()
     owners_as_path_count = 0
     for _ in range(owners_count):
         owner: CardanoPoolOwner = await ctx.call(CardanoTxItemAck(), CardanoPoolOwner)
         validate_pool_owner(owner, account_path_checker)
-        await _show_pool_owner(ctx, keychain, owner, protocol_magic, network_id)
+        await _show_pool_owner(keychain, owner, protocol_magic, network_id)
 
         pool_owners_list.append(cborize_pool_owner(keychain, owner))
 
@@ -617,10 +600,10 @@ async def _process_pool_owners(
 
 
 async def _process_pool_relays(
-    ctx: wire.Context,
     relays_list: HashBuilderList[cbor.CborSequence],
     relays_count: int,
 ) -> None:
+    ctx = wire.get_context()
     for _ in range(relays_count):
         relay: CardanoPoolRelayParameters = await ctx.call(
             CardanoTxItemAck(), CardanoPoolRelayParameters
@@ -630,7 +613,6 @@ async def _process_pool_relays(
 
 
 async def _process_withdrawals(
-    ctx: wire.Context,
     keychain: seed.Keychain,
     withdrawals_dict: HashBuilderDict[bytes, int],
     withdrawals_count: int,
@@ -640,6 +622,7 @@ async def _process_withdrawals(
     account_path_checker: AccountPathChecker,
 ) -> None:
     """Read, validate, confirm and serialize the withdrawals."""
+    ctx = wire.get_context()
     if withdrawals_count == 0:
         return
 
@@ -656,19 +639,19 @@ async def _process_withdrawals(
             keychain, withdrawal, protocol_magic, network_id
         )
 
-        await confirm_withdrawal(ctx, withdrawal, reward_address_bytes, network_id)
+        await confirm_withdrawal(withdrawal, reward_address_bytes, network_id)
 
         withdrawals_dict.add(reward_address_bytes, withdrawal.amount)
 
 
 async def _process_auxiliary_data(
-    ctx: wire.Context,
     keychain: seed.Keychain,
     tx_body_builder_dict: HashBuilderDict,
     protocol_magic: int,
     network_id: int,
 ) -> None:
     """Read, validate, confirm and serialize the auxiliary data."""
+    ctx = wire.get_context()
     auxiliary_data: CardanoTxAuxiliaryData = await ctx.call(
         CardanoTxItemAck(), CardanoTxAuxiliaryData
     )
@@ -682,7 +665,6 @@ async def _process_auxiliary_data(
     )
 
     await show_auxiliary_data(
-        ctx,
         keychain,
         auxiliary_data_hash,
         auxiliary_data.catalyst_registration_parameters,
@@ -696,12 +678,13 @@ async def _process_auxiliary_data(
 
 
 async def _process_minting(
-    ctx: wire.Context, minting_dict: HashBuilderDict[bytes, HashBuilderDict]
+    minting_dict: HashBuilderDict[bytes, HashBuilderDict]
 ) -> None:
     """Read, validate and serialize the asset groups of token minting."""
+    ctx = wire.get_context()
     token_minting: CardanoTxMint = await ctx.call(CardanoTxItemAck(), CardanoTxMint)
 
-    await show_warning_tx_contains_mint(ctx)
+    await show_warning_tx_contains_mint()
 
     for _ in range(token_minting.asset_groups_count):
         asset_group: CardanoAssetGroup = await ctx.call(
@@ -714,7 +697,6 @@ async def _process_minting(
         )
         with minting_dict.add(asset_group.policy_id, tokens):
             await _process_minting_tokens(
-                ctx,
                 tokens,
                 asset_group.policy_id,
                 asset_group.tokens_count,
@@ -722,46 +704,45 @@ async def _process_minting(
 
 
 async def _process_minting_tokens(
-    ctx: wire.Context,
     tokens: HashBuilderDict[bytes, int],
     policy_id: bytes,
     tokens_count: int,
 ) -> None:
     """Read, validate, confirm and serialize the tokens of an asset group."""
+    ctx = wire.get_context()
     for _ in range(tokens_count):
         token: CardanoToken = await ctx.call(CardanoTxItemAck(), CardanoToken)
         _validate_token(token, is_mint=True)
-        await confirm_token_minting(ctx, policy_id, token)
+        await confirm_token_minting(policy_id, token)
 
         assert token.mint_amount is not None  # _validate_token
         tokens.add(token.asset_name_bytes, token.mint_amount)
 
 
 async def _process_script_data_hash(
-    ctx: wire.Context,
     tx_body_builder_dict: HashBuilderDict,
     script_data_hash: bytes,
 ) -> None:
     """Validate, confirm and serialize the script data hash."""
     _validate_script_data_hash(script_data_hash)
 
-    await confirm_script_data_hash(ctx, script_data_hash)
+    await confirm_script_data_hash(script_data_hash)
 
     tx_body_builder_dict.add(TX_BODY_KEY_SCRIPT_DATA_HASH, script_data_hash)
 
 
 async def _process_collateral_inputs(
-    ctx: wire.Context,
     collateral_inputs_list: HashBuilderList[tuple[bytes, int]],
     collateral_inputs_count: int,
 ) -> None:
     """Read, validate, show and serialize the collateral inputs."""
+    ctx = wire.get_context()
     for _ in range(collateral_inputs_count):
         collateral_input: CardanoTxCollateralInput = await ctx.call(
             CardanoTxItemAck(), CardanoTxCollateralInput
         )
         _validate_collateral_input(collateral_input)
-        await confirm_collateral_input(ctx, collateral_input)
+        await confirm_collateral_input(collateral_input)
 
         collateral_inputs_list.append(
             (collateral_input.prev_hash, collateral_input.prev_index)
@@ -769,18 +750,18 @@ async def _process_collateral_inputs(
 
 
 async def _process_required_signers(
-    ctx: wire.Context,
     keychain: seed.Keychain,
     required_signers_list: HashBuilderList[bytes],
     required_signers_count: int,
 ) -> None:
     """Read, validate, show and serialize the required signers."""
+    ctx = wire.get_context()
     for _ in range(required_signers_count):
         required_signer: CardanoTxRequiredSigner = await ctx.call(
             CardanoTxItemAck(), CardanoTxRequiredSigner
         )
         _validate_required_signer(required_signer)
-        await confirm_required_signer(ctx, required_signer)
+        await confirm_required_signer(required_signer)
 
         key_hash = required_signer.key_hash or get_public_key_hash(
             keychain, required_signer.key_path
@@ -790,7 +771,6 @@ async def _process_required_signers(
 
 
 async def _process_witness_requests(
-    ctx: wire.Context,
     keychain: seed.Keychain,
     tx_hash: bytes,
     witness_requests_count: int,
@@ -798,6 +778,7 @@ async def _process_witness_requests(
     transaction_has_token_minting: bool,
     account_path_checker: AccountPathChecker,
 ) -> CardanoTxResponseType:
+    ctx = wire.get_context()
     response: CardanoTxResponseType = CardanoTxItemAck()
 
     for _ in range(witness_requests_count):
@@ -809,7 +790,7 @@ async def _process_witness_requests(
             account_path_checker,
         )
         path = witness_request.path
-        await _show_witness_request(ctx, path, signing_mode)
+        await _show_witness_request(path, signing_mode)
         if is_byron_path(path):
             response = _get_byron_witness(keychain, path, tx_hash)
         else:
@@ -948,7 +929,6 @@ def _should_show_output(
 
 
 async def _show_output(
-    ctx: wire.Context,
     keychain: seed.Keychain,
     output: CardanoTxOutput,
     protocol_magic: int,
@@ -956,14 +936,14 @@ async def _show_output(
     signing_mode: CardanoTxSigningMode,
 ) -> None:
     if output.datum_hash:
-        await show_warning_tx_output_contains_datum_hash(ctx, output.datum_hash)
+        await show_warning_tx_output_contains_datum_hash(output.datum_hash)
 
     address_type = _get_output_address_type(output)
     if output.datum_hash is None and address_type in ADDRESS_TYPES_PAYMENT_SCRIPT:
-        await show_warning_tx_output_no_datum_hash(ctx)
+        await show_warning_tx_output_no_datum_hash()
 
     if output.asset_groups_count > 0:
-        await show_warning_tx_output_contains_tokens(ctx)
+        await show_warning_tx_output_contains_tokens()
 
     is_change_output = False
     if address_parameters := output.address_parameters:
@@ -979,7 +959,6 @@ async def _show_output(
             # be hidden, but we need to show them in PLUTUS_TRANSACTION because of the script
             # evaluation. We at least hide the staking path if it matches the payment path.
             await show_device_owned_output_credentials(
-                ctx,
                 payment_credential,
                 stake_credential,
                 show_both_credentials,
@@ -987,7 +966,6 @@ async def _show_output(
         else:
             is_change_output = True
             await show_change_output_credentials(
-                ctx,
                 payment_credential,
                 stake_credential,
             )
@@ -995,7 +973,7 @@ async def _show_output(
         assert output.address is not None  # _validate_output
         address = output.address
 
-    await confirm_sending(ctx, output.amount, address, is_change_output, network_id)
+    await confirm_sending(output.amount, address, is_change_output, network_id)
 
 
 def _validate_asset_group(
@@ -1028,7 +1006,6 @@ def _validate_token(token: CardanoToken, is_mint: bool = False) -> None:
 
 
 async def _show_certificate(
-    ctx: wire.Context,
     certificate: CardanoTxCertificate,
     signing_mode: CardanoTxSigningMode,
     network_id: int,
@@ -1036,16 +1013,16 @@ async def _show_certificate(
     if signing_mode == CardanoTxSigningMode.ORDINARY_TRANSACTION:
         assert certificate.path  # validate_certificate
         await _fail_or_warn_if_invalid_path(
-            ctx, SCHEMA_STAKING, certificate.path, CERTIFICATE_PATH_NAME
+            SCHEMA_STAKING, certificate.path, CERTIFICATE_PATH_NAME
         )
-        await confirm_certificate(ctx, certificate)
+        await confirm_certificate(certificate)
     elif signing_mode in (
         CardanoTxSigningMode.MULTISIG_TRANSACTION,
         CardanoTxSigningMode.PLUTUS_TRANSACTION,
     ):
-        await confirm_certificate(ctx, certificate)
+        await confirm_certificate(certificate)
     elif signing_mode == CardanoTxSigningMode.POOL_REGISTRATION_AS_OWNER:
-        await _show_stake_pool_registration_certificate(ctx, certificate, network_id)
+        await _show_stake_pool_registration_certificate(certificate, network_id)
     else:
         raise RuntimeError  # we didn't cover all signing modes
 
@@ -1151,7 +1128,6 @@ def _sign_tx_hash(
 
 
 async def _show_stake_pool_registration_certificate(
-    ctx: wire.Context,
     stake_pool_registration_certificate: CardanoTxCertificate,
     network_id: int,
 ) -> None:
@@ -1161,13 +1137,12 @@ async def _show_stake_pool_registration_certificate(
     assert pool_parameters is not None
 
     # display the transaction (certificate) in UI
-    await confirm_stake_pool_parameters(ctx, pool_parameters, network_id)
+    await confirm_stake_pool_parameters(pool_parameters, network_id)
 
-    await confirm_stake_pool_metadata(ctx, pool_parameters.metadata)
+    await confirm_stake_pool_metadata(pool_parameters.metadata)
 
 
 async def _show_pool_owner(
-    ctx: wire.Context,
     keychain: seed.Keychain,
     owner: CardanoPoolOwner,
     protocol_magic: int,
@@ -1175,13 +1150,12 @@ async def _show_pool_owner(
 ) -> None:
     if owner.staking_key_path:
         await _fail_or_warn_if_invalid_path(
-            ctx,
             SCHEMA_STAKING,
             owner.staking_key_path,
             POOL_OWNER_STAKING_PATH_NAME,
         )
 
-    await confirm_stake_pool_owner(ctx, keychain, owner, protocol_magic, network_id)
+    await confirm_stake_pool_owner(keychain, owner, protocol_magic, network_id)
 
 
 def _validate_witness_request(
@@ -1242,7 +1216,6 @@ def _ensure_only_staking_witnesses(witness: CardanoTxWitnessRequest) -> None:
 
 
 async def _show_witness_request(
-    ctx: wire.Context,
     witness_path: list[int],
     signing_mode: CardanoTxSigningMode,
 ) -> None:
@@ -1255,15 +1228,15 @@ async def _show_witness_request(
         is_minting = SCHEMA_MINT.match(witness_path)
 
         if is_minting:
-            await confirm_witness_request(ctx, witness_path)
+            await confirm_witness_request(witness_path)
         elif not is_payment and not is_staking:
-            await _fail_or_warn_path(ctx, witness_path, WITNESS_PATH_NAME)
+            await _fail_or_warn_path(witness_path, WITNESS_PATH_NAME)
     elif signing_mode in (
         CardanoTxSigningMode.POOL_REGISTRATION_AS_OWNER,
         CardanoTxSigningMode.MULTISIG_TRANSACTION,
         CardanoTxSigningMode.PLUTUS_TRANSACTION,
     ):
-        await confirm_witness_request(ctx, witness_path)
+        await confirm_witness_request(witness_path)
     else:
         raise RuntimeError  # we didn't cover all signing modes
 
@@ -1288,19 +1261,17 @@ def _is_network_id_verifiable(msg: CardanoSignTxInit) -> bool:
 
 
 async def _fail_or_warn_if_invalid_path(
-    ctx: wire.Context, schema: PathSchema, path: list[int], path_name: str
+    schema: PathSchema, path: list[int], path_name: str
 ) -> None:
     if not schema.match(path):
-        await _fail_or_warn_path(ctx, path, path_name)
+        await _fail_or_warn_path(path, path_name)
 
 
-async def _fail_or_warn_path(
-    ctx: wire.Context, path: list[int], path_name: str
-) -> None:
+async def _fail_or_warn_path(path: list[int], path_name: str) -> None:
     if safety_checks.is_strict():
         raise wire.DataError(f"Invalid {path_name.lower()}")
     else:
-        await show_warning_path(ctx, path, path_name)
+        await show_warning_path(path, path_name)
 
 
 def _fail_if_strict_and_unusual(

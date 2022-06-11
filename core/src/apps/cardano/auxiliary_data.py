@@ -19,8 +19,6 @@ from .helpers.utils import derive_public_key
 from .layout import confirm_catalyst_registration, show_auxiliary_data_hash
 
 if TYPE_CHECKING:
-    from trezor import wire
-
     from trezor.messages import (
         CardanoCatalystRegistrationParametersType,
         CardanoTxAuxiliaryData,
@@ -85,7 +83,6 @@ def _validate_catalyst_registration_parameters(
 
 
 async def show_auxiliary_data(
-    ctx: wire.Context,
     keychain: seed.Keychain,
     auxiliary_data_hash: bytes,
     catalyst_registration_parameters: CardanoCatalystRegistrationParametersType | None,
@@ -94,18 +91,16 @@ async def show_auxiliary_data(
 ) -> None:
     if catalyst_registration_parameters:
         await _show_catalyst_registration(
-            ctx,
             keychain,
             catalyst_registration_parameters,
             protocol_magic,
             network_id,
         )
 
-    await show_auxiliary_data_hash(ctx, auxiliary_data_hash)
+    await show_auxiliary_data_hash(auxiliary_data_hash)
 
 
 async def _show_catalyst_registration(
-    ctx: wire.Context,
     keychain: seed.Keychain,
     catalyst_registration_parameters: CardanoCatalystRegistrationParametersType,
     protocol_magic: int,
@@ -123,7 +118,7 @@ async def _show_catalyst_registration(
     nonce = catalyst_registration_parameters.nonce
 
     await confirm_catalyst_registration(
-        ctx, encoded_public_key, staking_path, reward_address, nonce
+        encoded_public_key, staking_path, reward_address, nonce
     )
 
 

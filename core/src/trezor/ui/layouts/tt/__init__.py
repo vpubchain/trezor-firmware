@@ -80,7 +80,6 @@ __all__ = (
 
 
 async def confirm_action(
-    ctx: wire.GenericContext,
     br_type: str,
     title: str,
     action: str | None = None,
@@ -97,6 +96,7 @@ async def confirm_action(
     larger_vspace: bool = False,  # TODO cleanup @ redesign
     exc: ExceptionType = wire.ActionCancelled,
     br_code: ButtonRequestType = ButtonRequestType.Other,
+    ctx: wire.GenericContext | None = None,
 ) -> None:
     text = Text(
         title,
@@ -144,14 +144,12 @@ async def confirm_action(
     else:
         layout = Confirm(text, confirm=verb, cancel=verb_cancel)
     await raise_if_cancelled(
-        interact(ctx, layout, br_type, br_code),
+        interact(layout, br_type, br_code, ctx=ctx),
         exc,
     )
 
 
-async def confirm_reset_device(
-    ctx: wire.GenericContext, prompt: str, recovery: bool = False
-) -> None:
+async def confirm_reset_device(prompt: str, recovery: bool = False) -> None:
     if recovery:
         text = Text("Recovery mode", ui.ICON_RECOVERY, new_lines=False)
     else:
@@ -165,7 +163,6 @@ async def confirm_reset_device(
     text.bold("https://trezor.io/tos")
     await raise_if_cancelled(
         interact(
-            ctx,
             Confirm(text, major_confirm=not recovery),
             "recover_device" if recovery else "setup_device",
             ButtonRequestType.ProtectCall
@@ -176,7 +173,7 @@ async def confirm_reset_device(
 
 
 # TODO cleanup @ redesign
-async def confirm_backup(ctx: wire.GenericContext) -> bool:
+async def confirm_backup() -> bool:
     text1 = Text("Success", ui.ICON_CONFIRM, ui.GREEN, new_lines=False)
     text1.bold("New wallet created successfully!\n")
     text1.br_half()
@@ -189,7 +186,6 @@ async def confirm_backup(ctx: wire.GenericContext) -> bool:
 
     if is_confirmed(
         await interact(
-            ctx,
             Confirm(text1, cancel="Skip", confirm="Back up", major_confirm=True),
             "backup_device",
             ButtonRequestType.ResetDevice,
@@ -199,7 +195,6 @@ async def confirm_backup(ctx: wire.GenericContext) -> bool:
 
     confirmed = is_confirmed(
         await interact(
-            ctx,
             Confirm(text2, cancel="Skip", confirm="Back up", major_confirm=True),
             "backup_device",
             ButtonRequestType.ResetDevice,
@@ -208,16 +203,13 @@ async def confirm_backup(ctx: wire.GenericContext) -> bool:
     return confirmed
 
 
-async def confirm_path_warning(
-    ctx: wire.GenericContext, path: str, path_type: str = "Path"
-) -> None:
+async def confirm_path_warning(path: str, path_type: str = "Path") -> None:
     text = Text("Confirm path", ui.ICON_WRONG, ui.RED)
     text.normal(path_type)
     text.mono(*break_path_to_lines(path, MONO_ADDR_PER_LINE))
     text.normal("is unknown.", "Are you sure?")
     await raise_if_cancelled(
         interact(
-            ctx,
             Confirm(text),
             "path_warning",
             ButtonRequestType.UnknownDerivationPath,
@@ -298,12 +290,9 @@ def _show_xpub(xpub: str, title: str, cancel: str) -> Paginated:
     return content
 
 
-async def show_xpub(
-    ctx: wire.GenericContext, xpub: str, title: str, cancel: str
-) -> None:
+async def show_xpub(xpub: str, title: str, cancel: str) -> None:
     await raise_if_cancelled(
         interact(
-            ctx,
             _show_xpub(xpub, title, cancel),
             "show_xpub",
             ButtonRequestType.PublicKey,
@@ -312,7 +301,6 @@ async def show_xpub(
 
 
 async def show_address(
-    ctx: wire.GenericContext,
     address: str,
     *,
     address_qr: str | None = None,
@@ -328,7 +316,6 @@ async def show_address(
     while True:
         if is_confirmed(
             await interact(
-                ctx,
                 _show_address(
                     address,
                     title,
@@ -342,7 +329,6 @@ async def show_address(
             break
         if is_confirmed(
             await interact(
-                ctx,
                 _show_qr(
                     address if address_qr is None else address_qr,
                     case_sensitive,
@@ -362,7 +348,6 @@ async def show_address(
                 title_xpub += " (yours)" if i == multisig_index else " (cosigner)"
                 if is_confirmed(
                     await interact(
-                        ctx,
                         _show_xpub(xpub, title=title_xpub, cancel=cancel),
                         "show_xpub",
                         ButtonRequestType.PublicKey,
@@ -371,11 +356,8 @@ async def show_address(
                     return
 
 
-def show_pubkey(
-    ctx: wire.Context, pubkey: str, title: str = "Confirm public key"
-) -> Awaitable[None]:
+def show_pubkey(pubkey: str, title: str = "Confirm public key") -> Awaitable[None]:
     return confirm_blob(
-        ctx,
         br_type="show_pubkey",
         title="Confirm public key",
         data=pubkey,
@@ -385,7 +367,6 @@ def show_pubkey(
 
 
 async def _show_modal(
-    ctx: wire.GenericContext,
     br_type: str,
     br_code: ButtonRequestType,
     header: str,
@@ -396,6 +377,7 @@ async def _show_modal(
     icon: str,
     icon_color: int,
     exc: ExceptionType = wire.ActionCancelled,
+    ctx: wire.GenericContext | None = None,
 ) -> None:
     text = Text(header, icon, icon_color, new_lines=False)
     if subheader:
@@ -405,17 +387,16 @@ async def _show_modal(
     text.normal(content)
     await raise_if_cancelled(
         interact(
-            ctx,
             Confirm(text, confirm=button_confirm, cancel=button_cancel),
             br_type,
             br_code,
+            ctx=ctx,
         ),
         exc,
     )
 
 
 async def show_error_and_raise(
-    ctx: wire.GenericContext,
     br_type: str,
     content: str,
     header: str = "Error",
@@ -423,9 +404,9 @@ async def show_error_and_raise(
     button: str = "Close",
     red: bool = False,
     exc: ExceptionType = wire.ActionCancelled,
+    ctx: wire.GenericContext | None = None,
 ) -> NoReturn:
     await _show_modal(
-        ctx,
         br_type=br_type,
         br_code=ButtonRequestType.Other,
         header=header,
@@ -436,12 +417,12 @@ async def show_error_and_raise(
         icon=ui.ICON_WRONG,
         icon_color=ui.RED if red else ui.ORANGE_ICON,
         exc=exc,
+        ctx=ctx,
     )
     raise exc
 
 
 def show_warning(
-    ctx: wire.GenericContext,
     br_type: str,
     content: str,
     header: str = "Warning",
@@ -450,9 +431,9 @@ def show_warning(
     br_code: ButtonRequestType = ButtonRequestType.Warning,
     icon: str = ui.ICON_WRONG,
     icon_color: int = ui.RED,
+    ctx: wire.GenericContext | None = None,
 ) -> Awaitable[None]:
     return _show_modal(
-        ctx,
         br_type=br_type,
         br_code=br_code,
         header=header,
@@ -462,18 +443,18 @@ def show_warning(
         button_cancel=None,
         icon=icon,
         icon_color=icon_color,
+        ctx=ctx,
     )
 
 
 def show_success(
-    ctx: wire.GenericContext,
     br_type: str,
     content: str,
     subheader: str | None = None,
     button: str = "Continue",
+    ctx: wire.GenericContext | None = None,
 ) -> Awaitable[None]:
     return _show_modal(
-        ctx,
         br_type=br_type,
         br_code=ButtonRequestType.Success,
         header="Success",
@@ -483,11 +464,11 @@ def show_success(
         button_cancel=None,
         icon=ui.ICON_CONFIRM,
         icon_color=ui.GREEN,
+        ctx=ctx,
     )
 
 
 async def confirm_output(
-    ctx: wire.GenericContext,
     address: str,
     amount: str,
     font_amount: int = ui.NORMAL,  # TODO cleanup @ redesign
@@ -519,11 +500,10 @@ async def confirm_output(
         text.mono(*chunks_intersperse(address, width))
         content = Confirm(text)
 
-    await raise_if_cancelled(interact(ctx, content, "confirm_output", br_code))
+    await raise_if_cancelled(interact(content, "confirm_output", br_code))
 
 
 async def confirm_payment_request(
-    ctx: wire.GenericContext,
     recipient_name: str,
     amount: str,
     memos: list[str],
@@ -538,14 +518,11 @@ async def confirm_payment_request(
         confirm=lambda text: InfoConfirm(text, info="Details"),
     )
     return await raise_if_cancelled(
-        interact(
-            ctx, content, "confirm_payment_request", ButtonRequestType.ConfirmOutput
-        )
+        interact(content, "confirm_payment_request", ButtonRequestType.ConfirmOutput)
     )
 
 
 async def should_show_more(
-    ctx: wire.GenericContext,
     title: str,
     para: Iterable[tuple[int, str]],
     button_text: str = "Show all",
@@ -570,14 +547,13 @@ async def should_show_more(
         page.content.extend((font, text, "\n"))
     ask_dialog = Confirm(AskPaginated(page, button_text))
 
-    result = await raise_if_cancelled(interact(ctx, ask_dialog, br_type, br_code))
+    result = await raise_if_cancelled(interact(ask_dialog, br_type, br_code))
     assert result in (SHOW_PAGINATED, CONFIRMED)
 
     return result is SHOW_PAGINATED
 
 
 async def _confirm_ask_pagination(
-    ctx: wire.GenericContext,
     br_type: str,
     title: str,
     para: Iterable[tuple[int, str]],
@@ -589,7 +565,6 @@ async def _confirm_ask_pagination(
     paginated: ui.Layout | None = None
     while True:
         if not await should_show_more(
-            ctx,
             title,
             para=para_truncated,
             br_type=br_type,
@@ -608,14 +583,13 @@ async def _confirm_ask_pagination(
                     content, cancel=None, confirm="Close", confirm_style=ButtonDefault
                 ),
             )
-        result = await interact(ctx, paginated, br_type, br_code)
+        result = await interact(paginated, br_type, br_code)
         assert result in (CONFIRMED, GO_BACK)
 
     assert False
 
 
 async def confirm_blob(
-    ctx: wire.GenericContext,
     br_type: str,
     title: str,
     data: bytes | str,
@@ -669,7 +643,7 @@ async def confirm_blob(
             per_line = MONO_HEX_PER_LINE
         text.mono(ui.FG, *chunks_intersperse(data_str, per_line))
         content: ui.Layout = HoldToConfirm(text) if hold else Confirm(text)
-        return await raise_if_cancelled(interact(ctx, content, br_type, br_code))
+        return await raise_if_cancelled(interact(content, br_type, br_code))
 
     elif ask_pagination:
         para = [(ui.MONO, line) for line in chunks(data_str, MONO_HEX_PER_LINE - 2)]
@@ -680,7 +654,7 @@ async def confirm_blob(
         para_truncated.extend(para[:TEXT_MAX_LINES])
 
         return await _confirm_ask_pagination(
-            ctx, br_type, title, para, para_truncated, br_code, icon, icon_color
+            br_type, title, para, para_truncated, br_code, icon, icon_color
         )
 
     else:
@@ -692,11 +666,10 @@ async def confirm_blob(
         paginated = paginate_paragraphs(
             para, title, icon, icon_color, confirm=HoldToConfirm if hold else Confirm
         )
-        return await raise_if_cancelled(interact(ctx, paginated, br_type, br_code))
+        return await raise_if_cancelled(interact(paginated, br_type, br_code))
 
 
 def confirm_address(
-    ctx: wire.GenericContext,
     title: str,
     address: str,
     description: str | None = "Address:",
@@ -708,7 +681,6 @@ def confirm_address(
     # TODO clarify API - this should be pretty limited to support mainly confirming
     # destinations and similar
     return confirm_blob(
-        ctx,
         br_type=br_type,
         title=title,
         data=address,
@@ -720,7 +692,6 @@ def confirm_address(
 
 
 async def confirm_text(
-    ctx: wire.GenericContext,
     br_type: str,
     title: str,
     data: str,
@@ -759,11 +730,10 @@ async def confirm_text(
             para.append((ui.NORMAL, description))
         para.append((ui.BOLD, data))
         content = paginate_paragraphs(para, title, icon, icon_color)
-    await raise_if_cancelled(interact(ctx, content, br_type, br_code))
+    await raise_if_cancelled(interact(content, br_type, br_code))
 
 
 def confirm_amount(
-    ctx: wire.GenericContext,
     title: str,
     amount: str,
     description: str = "Amount:",
@@ -776,7 +746,6 @@ def confirm_amount(
     # TODO clarify API - this should be pretty limited to support mainly confirming
     # destinations and similar
     return confirm_text(
-        ctx,
         br_type=br_type,
         title=title,
         data=amount,
@@ -792,7 +761,6 @@ _SCREEN_FULL_THRESHOLD = const(2)
 
 # TODO keep name and value on the same page if possible
 async def confirm_properties(
-    ctx: wire.GenericContext,
     br_type: str,
     title: str,
     props: Iterable[PropertyType],
@@ -853,11 +821,10 @@ async def confirm_properties(
     content = paginate_paragraphs(
         para, title, icon, icon_color, confirm=HoldToConfirm if hold else Confirm
     )
-    await raise_if_cancelled(interact(ctx, content, br_type, br_code))
+    await raise_if_cancelled(interact(content, br_type, br_code))
 
 
 async def confirm_total(
-    ctx: wire.GenericContext,
     total_amount: str,
     fee_amount: str,
     fee_rate_amount: str | None = None,
@@ -877,26 +844,21 @@ async def confirm_total(
     if fee_rate_amount is not None:
         text.normal("\n" + fee_rate_amount)
 
-    await raise_if_cancelled(interact(ctx, HoldToConfirm(text), br_type, br_code))
+    await raise_if_cancelled(interact(HoldToConfirm(text), br_type, br_code))
 
 
-async def confirm_joint_total(
-    ctx: wire.GenericContext, spending_amount: str, total_amount: str
-) -> None:
+async def confirm_joint_total(spending_amount: str, total_amount: str) -> None:
     text = Text("Joint transaction", ui.ICON_SEND, ui.GREEN, new_lines=False)
     text.normal("You are contributing:\n")
     text.bold(spending_amount)
     text.normal("\nto the total amount:\n")
     text.bold(total_amount)
     await raise_if_cancelled(
-        interact(
-            ctx, HoldToConfirm(text), "confirm_joint_total", ButtonRequestType.SignTx
-        )
+        interact(HoldToConfirm(text), "confirm_joint_total", ButtonRequestType.SignTx)
     )
 
 
 async def confirm_metadata(
-    ctx: wire.GenericContext,
     br_type: str,
     title: str,
     content: str,
@@ -922,22 +884,19 @@ async def confirm_metadata(
 
     cls = HoldToConfirm if hold else Confirm
 
-    await raise_if_cancelled(interact(ctx, cls(text), br_type, br_code))
+    await raise_if_cancelled(interact(cls(text), br_type, br_code))
 
 
-async def confirm_replacement(
-    ctx: wire.GenericContext, description: str, txid: str
-) -> None:
+async def confirm_replacement(description: str, txid: str) -> None:
     text = Text(description, ui.ICON_SEND, ui.GREEN, new_lines=False)
     text.normal("Confirm transaction ID:\n")
     text.mono(*_truncate_hex(txid, TEXT_MAX_LINES - 1))
     await raise_if_cancelled(
-        interact(ctx, Confirm(text), "confirm_replacement", ButtonRequestType.SignTx)
+        interact(Confirm(text), "confirm_replacement", ButtonRequestType.SignTx)
     )
 
 
 async def confirm_modify_output(
-    ctx: wire.GenericContext,
     address: str,
     sign: int,
     amount_change: str,
@@ -960,7 +919,6 @@ async def confirm_modify_output(
 
     await raise_if_cancelled(
         interact(
-            ctx,
             Paginated([page1, Confirm(page2)]),
             "modify_output",
             ButtonRequestType.ConfirmOutput,
@@ -969,7 +927,6 @@ async def confirm_modify_output(
 
 
 async def confirm_modify_fee(
-    ctx: wire.GenericContext,
     sign: int,
     user_fee_change: str,
     total_fee_new: str,
@@ -988,12 +945,12 @@ async def confirm_modify_fee(
     text.normal("Transaction fee:\n")
     text.bold(total_fee_new)
     await raise_if_cancelled(
-        interact(ctx, HoldToConfirm(text), "modify_fee", ButtonRequestType.SignTx)
+        interact(HoldToConfirm(text), "modify_fee", ButtonRequestType.SignTx)
     )
 
 
 async def confirm_coinjoin(
-    ctx: wire.GenericContext, coin_name: str, max_rounds: int, max_fee_per_vbyte: str
+    coin_name: str, max_rounds: int, max_fee_per_vbyte: str
 ) -> None:
     text = Text("Authorize CoinJoin", ui.ICON_RECOVERY, new_lines=False)
     text.normal("Coin name: ")
@@ -1005,13 +962,13 @@ async def confirm_coinjoin(
     text.normal("Maximum mining fee:\n")
     text.bold(f"{max_fee_per_vbyte} sats/vbyte")
     await raise_if_cancelled(
-        interact(ctx, HoldToConfirm(text), "coinjoin_final", ButtonRequestType.Other)
+        interact(HoldToConfirm(text), "coinjoin_final", ButtonRequestType.Other)
     )
 
 
 # TODO cleanup @ redesign
 async def confirm_sign_identity(
-    ctx: wire.GenericContext, proto: str, identity: str, challenge_visual: str | None
+    proto: str, identity: str, challenge_visual: str | None
 ) -> None:
     text = Text(f"Sign {proto}", new_lines=False)
     if challenge_visual:
@@ -1019,12 +976,12 @@ async def confirm_sign_identity(
         text.br()
     text.mono(*chunks_intersperse(identity, 18))
     await raise_if_cancelled(
-        interact(ctx, Confirm(text), "sign_identity", ButtonRequestType.Other)
+        interact(Confirm(text), "sign_identity", ButtonRequestType.Other)
     )
 
 
 async def confirm_signverify(
-    ctx: wire.GenericContext, coin: str, message: str, address: str, verify: bool
+    coin: str, message: str, address: str, verify: bool
 ) -> None:
     if verify:
         header = f"Verify {coin} message"
@@ -1036,13 +993,11 @@ async def confirm_signverify(
     text = Text(header, new_lines=False)
     text.bold("Confirm address:\n")
     text.mono(*chunks_intersperse(address, MONO_ADDR_PER_LINE))
-    await raise_if_cancelled(
-        interact(ctx, Confirm(text), br_type, ButtonRequestType.Other)
-    )
+    await raise_if_cancelled(interact(Confirm(text), br_type, ButtonRequestType.Other))
 
     para = [(ui.BOLD, "Confirm message:"), (ui.MONO, message)]
     content = paginate_paragraphs(para, header)
-    await raise_if_cancelled(interact(ctx, content, br_type, ButtonRequestType.Other))
+    await raise_if_cancelled(interact(content, br_type, ButtonRequestType.Other))
 
 
 async def show_popup(
@@ -1066,7 +1021,8 @@ def draw_simple_text(title: str, description: str = "") -> None:
     ui.draw_simple(text)
 
 
-async def request_passphrase_on_device(ctx: wire.GenericContext, max_len: int) -> str:
+async def request_passphrase_on_device(max_len: int) -> str:
+    ctx = wire.get_context()
     await button_request(
         ctx, "passphrase_device", code=ButtonRequestType.PassphraseEntry
     )
@@ -1081,11 +1037,11 @@ async def request_passphrase_on_device(ctx: wire.GenericContext, max_len: int) -
 
 
 async def request_pin_on_device(
-    ctx: wire.GenericContext,
     prompt: str,
     attempts_remaining: int | None,
     allow_cancel: bool,
 ) -> str:
+    ctx = wire.get_context()
     await button_request(ctx, "pin_device", code=ButtonRequestType.PinEntry)
 
     if attempts_remaining is None:

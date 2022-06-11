@@ -144,7 +144,7 @@ async def _finish_recovery(
     storage.recovery.end_progress()
 
     await show_success(
-        ctx, "success_recovery", "You have successfully recovered your wallet."
+        "success_recovery", "You have successfully recovered your wallet.", ctx=ctx
     )
     return Success(message="Device recovered")
 
@@ -172,7 +172,7 @@ async def _process_words(
     if secret is None:  # SLIP-39
         assert share is not None
         if share.group_count and share.group_count > 1:
-            await layout.show_group_share_success(ctx, share.index, share.group_index)
+            await layout.show_group_share_success(share.index, share.group_index)
         await _request_share_next_screen(ctx)
 
     return secret, backup_type
@@ -244,5 +244,5 @@ async def _show_remaining_groups_and_shares(ctx: wire.GenericContext) -> None:
 
     assert share  # share needs to be set
     return await layout.show_remaining_shares(
-        ctx, groups, shares_remaining, share.group_threshold
+        groups, shares_remaining, share.group_threshold
     )

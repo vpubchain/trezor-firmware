@@ -15,7 +15,6 @@ if TYPE_CHECKING:
 
 
 async def confirm_action(
-    ctx: wire.GenericContext,
     br_type: str,
     title: str,
     action: str | None = None,
@@ -32,6 +31,7 @@ async def confirm_action(
     larger_vspace: bool = False,
     exc: ExceptionType = wire.ActionCancelled,
     br_code: ButtonRequestType = ButtonRequestType.Other,
+    ctx: wire.GenericContext | None = None,
 ) -> None:
     if isinstance(verb, bytes) or isinstance(verb_cancel, bytes):
         raise NotImplementedError
@@ -50,7 +50,6 @@ async def confirm_action(
         log.error(__name__, "confirm_action verb_cancel not implemented")
 
     result = await interact(
-        ctx,
         RustLayout(
             trezorui2.confirm_action(
                 title=title.upper(),
@@ -63,16 +62,14 @@ async def confirm_action(
         ),
         br_type,
         br_code,
+        ctx=ctx,
     )
     if result is not trezorui2.CONFIRMED:
         raise exc
 
 
-async def confirm_reset_device(
-    ctx: wire.GenericContext, prompt: str, recovery: bool = False
-) -> None:
+async def confirm_reset_device(prompt: str, recovery: bool = False) -> None:
     return await confirm_action(
-        ctx,
         "recover_device" if recovery else "setup_device",
         "not implemented",
         action="not implemented",
@@ -80,24 +77,19 @@ async def confirm_reset_device(
 
 
 # TODO cleanup @ redesign
-async def confirm_backup(ctx: wire.GenericContext) -> bool:
+async def confirm_backup() -> bool:
     raise NotImplementedError
 
 
-async def confirm_path_warning(
-    ctx: wire.GenericContext, path: str, path_type: str = "Path"
-) -> None:
+async def confirm_path_warning(path: str, path_type: str = "Path") -> None:
     raise NotImplementedError
 
 
-async def show_xpub(
-    ctx: wire.GenericContext, xpub: str, title: str, cancel: str
-) -> None:
+async def show_xpub(xpub: str, title: str, cancel: str) -> None:
     raise NotImplementedError
 
 
 async def show_address(
-    ctx: wire.GenericContext,
     address: str,
     *,
     case_sensitive: bool = True,
@@ -112,11 +104,8 @@ async def show_address(
     raise NotImplementedError
 
 
-def show_pubkey(
-    ctx: wire.Context, pubkey: str, title: str = "Confirm public key"
-) -> Awaitable[None]:
+def show_pubkey(pubkey: str, title: str = "Confirm public key") -> Awaitable[None]:
     return confirm_blob(
-        ctx,
         br_type="show_pubkey",
         title="Confirm public key",
         data=pubkey,
@@ -126,7 +115,6 @@ def show_pubkey(
 
 
 async def _show_modal(
-    ctx: wire.GenericContext,
     br_type: str,
     br_code: ButtonRequestType,
     header: str,
@@ -137,12 +125,12 @@ async def _show_modal(
     icon: str,
     icon_color: int,
     exc: ExceptionType = wire.ActionCancelled,
+    ctx: wire.GenericContext | None = None,
 ) -> None:
     raise NotImplementedError
 
 
 async def show_error_and_raise(
-    ctx: wire.GenericContext,
     br_type: str,
     content: str,
     header: str = "Error",
@@ -150,9 +138,9 @@ async def show_error_and_raise(
     button: str = "Close",
     red: bool = False,
     exc: ExceptionType = wire.ActionCancelled,
+    ctx: wire.GenericContext | None = None,
 ) -> NoReturn:
     await _show_modal(
-        ctx,
         br_type=br_type,
         br_code=ButtonRequestType.Other,
         header=header,
@@ -163,12 +151,12 @@ async def show_error_and_raise(
         icon=ui.ICON_WRONG,
         icon_color=ui.RED if red else ui.ORANGE_ICON,
         exc=exc,
+        ctx=ctx,
     )
     raise exc
 
 
 def show_warning(
-    ctx: wire.GenericContext,
     br_type: str,
     content: str,
     header: str = "Warning",
@@ -177,9 +165,9 @@ def show_warning(
     br_code: ButtonRequestType = ButtonRequestType.Warning,
     icon: str = ui.ICON_WRONG,
     icon_color: int = ui.RED,
+    ctx: wire.GenericContext | None = None,
 ) -> Awaitable[None]:
     return _show_modal(
-        ctx,
         br_type=br_type,
         br_code=br_code,
         header=header,
@@ -189,18 +177,18 @@ def show_warning(
         button_cancel=None,
         icon=icon,
         icon_color=icon_color,
+        ctx=ctx,
     )
 
 
 def show_success(
-    ctx: wire.GenericContext,
     br_type: str,
     content: str,
     subheader: str | None = None,
     button: str = "Continue",
+    ctx: wire.GenericContext | None = None,
 ) -> Awaitable[None]:
     return _show_modal(
-        ctx,
         br_type=br_type,
         br_code=ButtonRequestType.Success,
         header="Success",
@@ -210,11 +198,11 @@ def show_success(
         button_cancel=None,
         icon=ui.ICON_CONFIRM,
         icon_color=ui.GREEN,
+        ctx=ctx,
     )
 
 
 async def confirm_output(
-    ctx: wire.GenericContext,
     address: str,
     amount: str,
     font_amount: int = ui.NORMAL,  # TODO cleanup @ redesign
@@ -232,7 +220,6 @@ async def confirm_output(
 
 
 async def confirm_payment_request(
-    ctx: wire.GenericContext,
     recipient_name: str,
     amount: str,
     memos: list[str],
@@ -241,7 +228,6 @@ async def confirm_payment_request(
 
 
 async def should_show_more(
-    ctx: wire.GenericContext,
     title: str,
     para: Iterable[tuple[int, str]],
     button_text: str = "Show all",
@@ -254,7 +240,6 @@ async def should_show_more(
 
 
 async def confirm_blob(
-    ctx: wire.GenericContext,
     br_type: str,
     title: str,
     data: bytes | str,
@@ -269,7 +254,6 @@ async def confirm_blob(
 
 
 def confirm_address(
-    ctx: wire.GenericContext,
     title: str,
     address: str,
     description: str | None = "Address:",
@@ -282,7 +266,6 @@ def confirm_address(
 
 
 async def confirm_text(
-    ctx: wire.GenericContext,
     br_type: str,
     title: str,
     data: str,
@@ -295,7 +278,6 @@ async def confirm_text(
 
 
 def confirm_amount(
-    ctx: wire.GenericContext,
     title: str,
     amount: str,
     description: str = "Amount:",
@@ -308,7 +290,6 @@ def confirm_amount(
 
 
 async def confirm_properties(
-    ctx: wire.GenericContext,
     br_type: str,
     title: str,
     props: Iterable[PropertyType],
@@ -321,7 +302,6 @@ async def confirm_properties(
 
 
 async def confirm_total(
-    ctx: wire.GenericContext,
     total_amount: str,
     fee_amount: str,
     fee_rate_amount: str | None = None,
@@ -335,14 +315,11 @@ async def confirm_total(
     raise NotImplementedError
 
 
-async def confirm_joint_total(
-    ctx: wire.GenericContext, spending_amount: str, total_amount: str
-) -> None:
+async def confirm_joint_total(spending_amount: str, total_amount: str) -> None:
     raise NotImplementedError
 
 
 async def confirm_metadata(
-    ctx: wire.GenericContext,
     br_type: str,
     title: str,
     content: str,
@@ -358,14 +335,11 @@ async def confirm_metadata(
     raise NotImplementedError
 
 
-async def confirm_replacement(
-    ctx: wire.GenericContext, description: str, txid: str
-) -> None:
+async def confirm_replacement(description: str, txid: str) -> None:
     raise NotImplementedError
 
 
 async def confirm_modify_output(
-    ctx: wire.GenericContext,
     address: str,
     sign: int,
     amount_change: str,
@@ -375,7 +349,6 @@ async def confirm_modify_output(
 
 
 async def confirm_modify_fee(
-    ctx: wire.GenericContext,
     sign: int,
     user_fee_change: str,
     total_fee_new: str,
@@ -384,20 +357,20 @@ async def confirm_modify_fee(
 
 
 async def confirm_coinjoin(
-    ctx: wire.GenericContext, coin_name: str, max_rounds: int, max_fee_per_vbyte: str
+    coin_name: str, max_rounds: int, max_fee_per_vbyte: str
 ) -> None:
     raise NotImplementedError
 
 
 # TODO cleanup @ redesign
 async def confirm_sign_identity(
-    ctx: wire.GenericContext, proto: str, identity: str, challenge_visual: str | None
+    proto: str, identity: str, challenge_visual: str | None
 ) -> None:
     raise NotImplementedError
 
 
 async def confirm_signverify(
-    ctx: wire.GenericContext, coin: str, message: str, address: str, verify: bool
+    coin: str, message: str, address: str, verify: bool
 ) -> None:
     raise NotImplementedError
 
@@ -416,7 +389,8 @@ def draw_simple_text(title: str, description: str = "") -> None:
     log.error(__name__, "draw_simple_text not implemented")
 
 
-async def request_passphrase_on_device(ctx: wire.GenericContext, max_len: int) -> str:
+async def request_passphrase_on_device(max_len: int) -> str:
+    ctx = wire.get_context()
     await button_request(
         ctx, "passphrase_device", code=ButtonRequestType.PassphraseEntry
     )
@@ -433,11 +407,11 @@ async def request_passphrase_on_device(ctx: wire.GenericContext, max_len: int) -
 
 
 async def request_pin_on_device(
-    ctx: wire.GenericContext,
     prompt: str,
     attempts_remaining: int | None,
     allow_cancel: bool,
 ) -> str:
+    ctx = wire.get_context()
     await button_request(ctx, "pin_device", code=ButtonRequestType.PinEntry)
 
     warning = "Wrong PIN" if "Wrong" in prompt else None

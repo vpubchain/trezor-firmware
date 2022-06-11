@@ -90,11 +90,10 @@ def _validate(msg: RecoveryDevice) -> None:
 async def _continue_dialog(ctx: wire.Context, msg: RecoveryDevice) -> None:
     if not msg.dry_run:
         await confirm_reset_device(
-            ctx, "Do you really want to\nrecover a wallet?", recovery=True
+            prompt="Do you really want to\nrecover a wallet?", recovery=True
         )
     else:
         await confirm_action(
-            ctx,
             "confirm_seedcheck",
             title="Seed check",
             description="Do you really want to check the recovery seed?",

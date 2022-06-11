@@ -11,7 +11,6 @@ class SdCardUnavailable(wire.ProcessError):
 async def _confirm_retry_wrong_card(ctx: wire.GenericContext) -> None:
     if SD_CARD_HOT_SWAPPABLE:
         await confirm_action(
-            ctx,
             "warning_wrong_sd",
             "SD card protection",
             action="Wrong SD card.",
@@ -24,7 +23,6 @@ async def _confirm_retry_wrong_card(ctx: wire.GenericContext) -> None:
         )
     else:
         await show_error_and_raise(
-            ctx,
             "warning_wrong_sd",
             header="SD card protection",
             subheader="Wrong SD card.",
@@ -36,7 +34,6 @@ async def _confirm_retry_wrong_card(ctx: wire.GenericContext) -> None:
 async def _confirm_retry_insert_card(ctx: wire.GenericContext) -> None:
     if SD_CARD_HOT_SWAPPABLE:
         await confirm_action(
-            ctx,
             "warning_no_sd",
             "SD card protection",
             action="SD card required.",
@@ -49,7 +46,6 @@ async def _confirm_retry_insert_card(ctx: wire.GenericContext) -> None:
         )
     else:
         await show_error_and_raise(
-            ctx,
             "warning_no_sd",
             header="SD card protection",
             subheader="SD card required.",
@@ -61,7 +57,6 @@ async def _confirm_retry_insert_card(ctx: wire.GenericContext) -> None:
 async def _confirm_format_card(ctx: wire.GenericContext) -> None:
     # Format card? yes/no
     await confirm_action(
-        ctx,
         "warning_format_sd",
         "SD card error",
         action="Unknown filesystem.",
@@ -76,7 +71,6 @@ async def _confirm_format_card(ctx: wire.GenericContext) -> None:
 
     # Confirm formatting
     await confirm_action(
-        ctx,
         "confirm_format_sd",
         "Format SD card",
         action="All data on the SD card will be lost.",
@@ -96,7 +90,6 @@ async def confirm_retry_sd(
     exc: wire.ProcessError = SdCardUnavailable("Error accessing SD card."),
 ) -> None:
     await confirm_action(
-        ctx,
         "warning_sd_retry",
         "SD card problem",
         action=None,

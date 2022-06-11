@@ -57,7 +57,7 @@ async def change_pin(ctx: wire.Context, msg: ChangePin) -> Success:
         msg_screen = "You have successfully disabled PIN protection."
         msg_wire = "PIN removed"
 
-    await show_success(ctx, "success_pin", msg_screen)
+    await show_success("success_pin", msg_screen)
     return Success(message=msg_wire)
 
 
@@ -66,7 +66,6 @@ def require_confirm_change_pin(ctx: wire.Context, msg: ChangePin) -> Awaitable[N
 
     if msg.remove and has_pin:  # removing pin
         return confirm_action(
-            ctx,
             "set_pin",
             "Remove PIN",
             description="Do you really want to",
@@ -76,7 +75,6 @@ def require_confirm_change_pin(ctx: wire.Context, msg: ChangePin) -> Awaitable[N
 
     if not msg.remove and has_pin:  # changing pin
         return confirm_action(
-            ctx,
             "set_pin",
             "Change PIN",
             description="Do you really want to",
@@ -86,7 +84,6 @@ def require_confirm_change_pin(ctx: wire.Context, msg: ChangePin) -> Awaitable[N
 
     if not msg.remove and not has_pin:  # setting new pin
         return confirm_action(
-            ctx,
             "set_pin",
             "Enable PIN",
             description="Do you really want to",
