@@ -5,6 +5,7 @@ pub mod display;
 mod ffi;
 pub mod random;
 pub mod slip39;
+pub mod uzlib;
 
 #[cfg(not(feature = "micropython"))]
 pub mod time;
