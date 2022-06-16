@@ -13,6 +13,7 @@ mod protobuf;
 mod time;
 #[cfg(feature = "ui_debug")]
 mod trace;
+#[macro_use]
 mod trezorhal;
 
 #[cfg(feature = "ui")]
@@ -23,19 +24,18 @@ pub mod ui;
 #[cfg(any(not(feature = "test"), feature = "clippy"))]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
-    use cstr_core::CStr;
-
-    // Although it would be ideal to use the original error message, ignoring it
-    // lets us avoid the `fmt` machinery and its code size and is also important for
-    // security reasons, as we do not always controls the message contents. We
-    // should also avoid printing "panic" or "rust" on the user screen to avoid any
-    // confusion.
-
-    // SAFETY: Safe because we are passing in \0-terminated literals.
-    let empty = unsafe { CStr::from_bytes_with_nul_unchecked(b"\0") };
-    let msg = unsafe { CStr::from_bytes_with_nul_unchecked(b"rs\0") };
+    // TODO: as of 2022, ignoring the `_info` parameter does not help with saving
+    // flash space -- the `fmt` machinery still gets compiled in.
+    // We can avoid that by using unstable Cargo arguments:
+    //   -Zbuild-std=core -Zbuild-std-features=panic_immediate_abort
+    // Doing that will compile every panic!() to a single udf instruction which raises
+    // a Hard Fault on hardware.
+    //
+    // For debugging, we might still want to look into the PanicInfo to get some data.
+    //
+    // Otherwise, use `unwrap!` macro from trezorhal.
 
     // TODO: Ideally we would take the file and line info out of
     // `PanicInfo::location()`.
-    trezorhal::common::fatal_error(empty, msg, empty, 0, empty);
+    trezorhal::common::__fatal_error("", "rs", "", 0, "");
 }

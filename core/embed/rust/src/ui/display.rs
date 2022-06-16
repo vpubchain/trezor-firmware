@@ -60,7 +60,7 @@ pub fn rect_fill_rounded(r: Rect, fg_color: Color, bg_color: Color, radius: u8) 
 /// NOTE: Cannot start at odd x-coordinate. In this case icon is shifted 1px
 /// left.
 pub fn icon_top_left(top_left: Point, data: &[u8], fg_color: Color, bg_color: Color) {
-    let toif_info = display::toif_info(data).unwrap();
+    let toif_info = unwrap!(display::toif_info(data), "Invalid TOIF data");
     assert!(toif_info.grayscale);
     display::icon(
         top_left.x,
@@ -74,7 +74,7 @@ pub fn icon_top_left(top_left: Point, data: &[u8], fg_color: Color, bg_color: Co
 }
 
 pub fn icon(center: Point, data: &[u8], fg_color: Color, bg_color: Color) {
-    let toif_info = display::toif_info(data).unwrap();
+    let toif_info = unwrap!(display::toif_info(data), "Invalid TOIF data");
     assert!(toif_info.grayscale);
 
     let r = Rect::from_center_and_size(
