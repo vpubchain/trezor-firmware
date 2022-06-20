@@ -71,9 +71,6 @@ impl Component for FwInfo {
     fn paint(&mut self) {
         self.bg.paint();
         self.exit.paint();
-        let (p0, rest) = self.fingerprint.split_at(16);
-        let (p1, rest) = rest.split_at(16);
-        let (p2, p3) = rest.split_at(16);
         display::rect_fill(
             Rect::new(Point::new(16, 44), Point::new(WIDTH - 12, 45)),
             BLD_FG,
@@ -85,10 +82,12 @@ impl Component for FwInfo {
             BLD_TITLE_COLOR,
             BLD_BG,
         );
-        display::text_top_left(Point::new(15, 60), p0, FONT_MEDIUM, BLD_FG, BLD_BG);
-        display::text_top_left(Point::new(15, 80), p1, FONT_MEDIUM, BLD_FG, BLD_BG);
-        display::text_top_left(Point::new(15, 100), p2, FONT_MEDIUM, BLD_FG, BLD_BG);
-        display::text_top_left(Point::new(15, 120), p3, FONT_MEDIUM, BLD_FG, BLD_BG);
+        for i in 0..4usize {
+            let ypos = (60 + i * 20) as i32;
+            let idx = i * 16;
+            let part = self.fingerprint.get(idx..idx + 16).unwrap_or("");
+            display::text_top_left(Point::new(15, ypos), part, FONT_MEDIUM, BLD_FG, BLD_BG);
+        }
     }
 
     fn bounds(&self, _sink: &mut dyn FnMut(Rect)) {}

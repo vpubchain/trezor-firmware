@@ -1,3 +1,4 @@
+#[cfg(feature = "bootloader")]
 pub mod bootloader;
 pub mod component;
 pub mod constant;

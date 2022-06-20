@@ -1,11 +1,12 @@
-use core::slice;
-
-use crate::trezorhal::io::{io_touch_read, io_touch_unpack_x, io_touch_unpack_y};
-use crate::ui::component::{Component, Event, EventCtx};
-use crate::ui::display;
-use crate::ui::event::TouchEvent;
-use crate::ui::model_tt::bootloader::theme::TTBootloaderTextTemp;
-use crate::ui::model_tt::constant;
+use crate::{
+    trezorhal::io::{io_touch_read, io_touch_unpack_x, io_touch_unpack_y},
+    ui::{
+        component::{Component, Event, EventCtx},
+        display,
+        event::TouchEvent,
+        model_tt::{bootloader::theme::TTBootloaderTextTemp, constant},
+    },
+};
 use cstr_core::CStr;
 
 pub mod confirm;
@@ -17,10 +18,14 @@ pub mod progress;
 mod theme;
 mod title;
 
-use crate::ui::component::text::paragraphs::Paragraphs;
-use crate::ui::geometry::LinearPlacement;
-use crate::ui::model_tt::bootloader::connect::Connect;
-use crate::ui::model_tt::theme::{FONT_NORMAL, BACKLIGHT_NORMAL, BACKLIGHT_DIM};
+use crate::ui::{
+    component::text::paragraphs::Paragraphs,
+    geometry::LinearPlacement,
+    model_tt::{
+        bootloader::connect::Connect,
+        theme::{BACKLIGHT_DIM, BACKLIGHT_NORMAL, FONT_NORMAL},
+    },
+};
 use confirm::Confirm;
 use fwinfo::FwInfo;
 use intro::Intro;
@@ -40,6 +45,24 @@ fn fadein() {
 
 fn fadeout() {
     display::fade_backlight_duration(BACKLIGHT_DIM, 1000);
+}
+
+unsafe fn from_c_str(c_str: *const cty::c_char) -> Option<&'static str> {
+    unsafe {
+        let bytes = CStr::from_ptr(c_str).to_bytes();
+        if bytes.is_ascii() {
+            Some(core::str::from_utf8_unchecked(bytes))
+        } else {
+            None
+        }
+    }
+}
+
+unsafe fn from_c_array(c_str: *const cty::c_char, len: usize) -> Option<&'static str> {
+    unsafe {
+        let slice = core::slice::from_raw_parts(c_str as *const u8, len);
+        core::str::from_utf8(slice).ok()
+    }
 }
 
 impl<F> BootloaderLayout<F>
@@ -95,16 +118,11 @@ extern "C" fn screen_install_confirm(
     downgrade: bool,
     vendor: bool,
 ) -> u32 {
-    let ptr = vendor_str as *const u8;
-    let text = unsafe {
-        CStr::from_bytes_with_nul_unchecked(slice::from_raw_parts(
-            ptr,
-            (vendor_str_len as usize) + 1,
-        ))
-        .to_str()
-        .unwrap()
-    };
-    let version = unsafe { CStr::from_ptr(version).to_str().unwrap() };
+    let text = unwrap!(
+        unsafe { from_c_array(vendor_str, vendor_str_len as usize) },
+        "Invalid vendor string"
+    );
+    let version = unwrap!(unsafe { from_c_str(version) }, "Invalid version string");
 
     const ICON: Option<&'static [u8]> = Some(include_res!("model_tt/res/info.toif"));
     //const ICON: Option<&'static [u8]> = None;
@@ -150,7 +168,7 @@ extern "C" fn screen_wipe_confirm() -> u32 {
 
 #[no_mangle]
 extern "C" fn screen_menu(bld_version: *const cty::c_char) -> u32 {
-    let bld_version = unsafe { CStr::from_ptr(bld_version).to_str().unwrap() };
+    let bld_version = unwrap!(unsafe { from_c_str(bld_version) });
 
     let mut layout = BootloaderLayout::new(Menu::new(bld_version));
     return layout.process();
@@ -163,17 +181,9 @@ extern "C" fn screen_intro(
     vendor_str_len: u8,
     version: *const cty::c_char,
 ) -> u32 {
-    let ptr = vendor_str as *const u8;
-    let vendor = unsafe {
-        CStr::from_bytes_with_nul_unchecked(slice::from_raw_parts(
-            ptr,
-            (vendor_str_len as usize) + 1,
-        ))
-        .to_str()
-        .unwrap()
-    };
-    let version = unsafe { CStr::from_ptr(version).to_str().unwrap() };
-    let bld_version = unsafe { CStr::from_ptr(bld_version).to_str().unwrap() };
+    let vendor = unwrap!(unsafe { from_c_array(vendor_str, vendor_str_len as usize) });
+    let version = unwrap!(unsafe { from_c_str(version) });
+    let bld_version = unwrap!(unsafe { from_c_str(bld_version) });
 
     let mut layout = BootloaderLayout::new(Intro::new(bld_version, vendor, version));
     return layout.process();
@@ -181,7 +191,7 @@ extern "C" fn screen_intro(
 
 #[no_mangle]
 extern "C" fn screen_progress(text: *const cty::c_char, progress: u16, initialize: bool) -> u32 {
-    let text = unsafe { CStr::from_ptr(text).to_str().unwrap() };
+    let text = unwrap!(unsafe { from_c_str(text) });
     let mut frame = Progress::new(text, initialize);
 
     frame.place(constant::screen());
@@ -202,11 +212,7 @@ extern "C" fn screen_connect() -> u32 {
 
 #[no_mangle]
 extern "C" fn screen_fwinfo(fingerprint: *const cty::c_char) -> u32 {
-    let fingerprint = unsafe {
-        CStr::from_bytes_with_nul_unchecked(slice::from_raw_parts(fingerprint as *const u8, 64 + 1))
-            .to_str()
-            .unwrap()
-    };
+    let fingerprint = unwrap!(unsafe { from_c_str(fingerprint) });
 
     let mut layout = BootloaderLayout::new(FwInfo::new(fingerprint));
     return layout.process();
