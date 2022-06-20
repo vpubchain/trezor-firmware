@@ -5,8 +5,8 @@
 let
   # the last commit from master as of 2022-02-08
   rustOverlay = import (builtins.fetchTarball {
-    url = "https://github.com/oxalica/rust-overlay/archive/2eae19e246433530998cbf239d5505b7b87bc854.tar.gz";
-    sha256 = "0panx24sqcvx52wza02zsxmpkhg6xld7hklrv7dybc59akqm2ira";
+    url = "https://github.com/oxalica/rust-overlay/archive/cab0cb7f4dbbfa10cb3332da47726ed75861bfeb.tar.gz";
+    sha256 = "094809zf7v749xigd9az05xsx5lqxgw0azc05287pqw61a4ivimp";
   });
   # the last successful build of nixpkgs-unstable as of 2022-02-10
   nixpkgs = import (builtins.fetchTarball {
@@ -29,7 +29,7 @@ let
     chmod -w $out
   '';
   # NOTE: don't forget to update Minimum Supported Rust Version in docs/core/build/emulator.md
-  rustProfiles = nixpkgs.rust-bin.stable."1.58.1";
+  rustProfiles = nixpkgs.rust-bin.nightly."2022-06-01";
   rustStable = rustProfiles.minimal.override {
     targets = [
       "thumbv7em-none-eabihf" # TT
@@ -37,7 +37,7 @@ let
     ];
     # we use rustfmt from nixpkgs because it's built with the nighly flag needed for wrap_comments
     # to use official binary, remove rustfmt from buildInputs and add it to extensions:
-    extensions = [ "clippy" ];
+    extensions = [ "clippy" "rust-src" ];
   };
   llvmPackages = nixpkgs.llvmPackages_13;
   # see pyright/README.md for update procedure

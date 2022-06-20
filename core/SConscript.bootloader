@@ -235,7 +235,7 @@ def cargo_build():
     features.append("ui")
     features.append("bootloader")
 
-    return f'cd embed/rust; cargo build {profile} --target={RUST_TARGET} --target-dir=../../build/bootloader/rust --no-default-features --features "{" ".join(features)}"'
+    return f'cd embed/rust; cargo build {profile} --target={RUST_TARGET} --target-dir=../../build/bootloader/rust -Zbuild-std=core -Zbuild-std-features=panic_immediate_abort --no-default-features --features "{" ".join(features)}"'
 
 rust = env.Command(
     target=RUST_LIBPATH,
