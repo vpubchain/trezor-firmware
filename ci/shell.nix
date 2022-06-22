@@ -70,7 +70,6 @@ stdenvNoCC.mkDerivation ({
   ] ++ [
     SDL2
     SDL2_image
-    autoflake
     autoPatchelfHook
     bash
     check
