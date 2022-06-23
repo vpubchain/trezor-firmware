@@ -7,17 +7,20 @@ mod frame;
 mod page;
 mod passphrase;
 mod pin;
+mod simple_choice;
 
 use super::theme;
 
-pub use bip39::{Bip39Page, Bip39PageMsg};
+pub use bip39::{Bip39Entry, Bip39EntryMsg};
 pub use button::{
     BothButtonPressHandler, Button, ButtonContent, ButtonMsg, ButtonPos, ButtonStyle,
     ButtonStyleSheet,
 };
 pub use choice::{ChoicePage, ChoicePageMsg};
+pub use common::{ChoiceItem, StringChoiceItem};
 pub use dialog::{Dialog, DialogMsg};
 pub use frame::Frame;
 pub use page::ButtonPage;
-pub use passphrase::{PassphrasePage, PassphrasePageMsg};
-pub use pin::{PinPage, PinPageMsg};
+pub use passphrase::{PassphraseEntry, PassphraseEntryMsg};
+pub use pin::{PinEntry, PinEntryMsg};
+pub use simple_choice::{SimpleChoice, SimpleChoiceMsg};
