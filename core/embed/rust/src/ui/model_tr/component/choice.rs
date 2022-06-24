@@ -1,7 +1,7 @@
 use crate::{
     time::Duration,
     ui::{
-        component::{Component, Event, EventCtx, Pad},
+        component::{ButtonController, Component, Event, EventCtx, Pad},
         geometry::Rect,
     },
 };
@@ -67,6 +67,7 @@ pub struct ChoicePage<T, const N: usize> {
     select_button_map: Option<LinearMap<u8, &'static str, N>>,
     both_button_press: BothButtonPressHandler,
     pad: Pad,
+    buttons: ButtonController<&'static str>,
     prev: Button<&'static str>,
     next: Button<&'static str>,
     select: Button<&'static str>,
@@ -100,6 +101,7 @@ where
             select_button_map: None,
             both_button_press: BothButtonPressHandler::new(),
             pad: Pad::with_background(theme::BG),
+            buttons: ButtonController::ne(...,
             prev: Button::with_text(ButtonPos::Left, prev_text, theme::button_default()),
             next: Button::with_text(ButtonPos::Right, next_text, theme::button_default()),
             select: Button::with_text(ButtonPos::Middle, select_text, theme::button_default()),
@@ -282,6 +284,7 @@ where
         let button_height = theme::FONT_BOLD.line_height() + 2;
         let (_content_area, button_area) = bounds.split_bottom(button_height);
         self.pad.place(bounds);
+        self.buttons.place(button_area);
         self.prev.place(button_area);
         self.next.place(button_area);
         self.select.place(button_area);
@@ -296,7 +299,17 @@ where
     fn event(&mut self, ctx: &mut EventCtx, event: Event) -> Option<Self::Msg> {
         // Possibly replacing or skipping an event because of both-button-press
         // aggregation
-        let event = self.both_button_press.possibly_replace_event(event)?;
+        match self.buttons.event(event) {
+            Some(ButtonEvent::Pressed(ButtonPos::Left)) => {
+                ...
+            }
+            Some(ButtonEvent::Pressed(ButtonPos::Right)) => {
+                ...
+            }
+            Some(ButtonEvent::Released(ButtonPos::Left)) => {
+                ...
+            }
+        }
 
         // In case of both-button-press, changing all other buttons to released
         // state

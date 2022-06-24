@@ -110,6 +110,14 @@ impl<T: AsRef<str>> Button<T> {
         }
     }
 
+    pub fn set_pressed(&mut self, ctx: &mut EventCtx, is_pressed: bool) {
+        if is_pressed {
+            self.set(ctx, State::Pressed);
+        } else {
+            self.set(ctx, State::Released);
+        }
+    }
+
     pub fn set_released(&mut self, ctx: &mut EventCtx) {
         self.set(ctx, State::Released);
     }
@@ -135,6 +143,38 @@ impl<T: AsRef<str>> Button<T> {
         let start_of_baseline = area.bottom_left() + Offset::new(border_width, -2);
 
         (area, start_of_baseline)
+    }
+
+    fn paint(&mut self, style: &ButtonStyle) {
+        match &self.content {
+            ButtonContent::Text(text) => {
+                let background_color = style.text_color.negate();
+                if style.border_horiz {
+                    display::rect_fill_rounded1(self.area, background_color, theme::BG);
+                } else {
+                    display::rect_fill(self.area, background_color)
+                }
+
+                display::text(
+                    self.baseline,
+                    text.as_ref(),
+                    style.font,
+                    style.text_color,
+                    background_color,
+                );
+            }
+            ButtonContent::Icon(_image) => {
+                todo!();
+            }
+        }
+    }
+
+    pub fn paint_pressed(&mut self, is_pressed: bool) {
+        if is_pressed {
+            self.paint(&self.styles.active);
+        } else {
+            self.paint(&self.styles.normal);
+        }
     }
 }
 
@@ -181,28 +221,7 @@ where
 
     fn paint(&mut self) {
         let style = self.style();
-
-        match &self.content {
-            ButtonContent::Text(text) => {
-                let background_color = style.text_color.negate();
-                if style.border_horiz {
-                    display::rect_fill_rounded1(self.area, background_color, theme::BG);
-                } else {
-                    display::rect_fill(self.area, background_color)
-                }
-
-                display::text(
-                    self.baseline,
-                    text.as_ref(),
-                    style.font,
-                    style.text_color,
-                    background_color,
-                );
-            }
-            ButtonContent::Icon(_image) => {
-                todo!();
-            }
-        }
+        Button::paint(self, style);
     }
 }
 
