@@ -1,5 +1,6 @@
 mod bip39;
 mod button;
+mod button_controller;
 mod choice;
 mod common;
 mod dialog;
@@ -12,10 +13,8 @@ mod simple_choice;
 use super::theme;
 
 pub use bip39::{Bip39Entry, Bip39EntryMsg};
-pub use button::{
-    BothButtonPressHandler, Button, ButtonContent, ButtonMsg, ButtonPos, ButtonStyle,
-    ButtonStyleSheet,
-};
+pub use button::{Button, ButtonContent, ButtonMsg, ButtonPos, ButtonStyle, ButtonStyleSheet};
+pub use button_controller::{ButtonController, ButtonControllerMsg};
 pub use choice::{ChoicePage, ChoicePageMsg};
 pub use common::{ChoiceItem, StringChoiceItem};
 pub use dialog::{Dialog, DialogMsg};
