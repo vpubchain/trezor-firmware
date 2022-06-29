@@ -96,7 +96,6 @@ async def confirm_action(
     larger_vspace: bool = False,  # TODO cleanup @ redesign
     exc: ExceptionType = wire.ActionCancelled,
     br_code: ButtonRequestType = ButtonRequestType.Other,
-    ctx: wire.GenericContext | None = None,
 ) -> None:
     text = Text(
         title,
@@ -144,7 +143,7 @@ async def confirm_action(
     else:
         layout = Confirm(text, confirm=verb, cancel=verb_cancel)
     await raise_if_cancelled(
-        interact(layout, br_type, br_code, ctx=ctx),
+        interact(layout, br_type, br_code),
         exc,
     )
 
@@ -377,7 +376,6 @@ async def _show_modal(
     icon: str,
     icon_color: int,
     exc: ExceptionType = wire.ActionCancelled,
-    ctx: wire.GenericContext | None = None,
 ) -> None:
     text = Text(header, icon, icon_color, new_lines=False)
     if subheader:
@@ -390,7 +388,6 @@ async def _show_modal(
             Confirm(text, confirm=button_confirm, cancel=button_cancel),
             br_type,
             br_code,
-            ctx=ctx,
         ),
         exc,
     )
@@ -404,7 +401,6 @@ async def show_error_and_raise(
     button: str = "Close",
     red: bool = False,
     exc: ExceptionType = wire.ActionCancelled,
-    ctx: wire.GenericContext | None = None,
 ) -> NoReturn:
     await _show_modal(
         br_type=br_type,
@@ -417,7 +413,6 @@ async def show_error_and_raise(
         icon=ui.ICON_WRONG,
         icon_color=ui.RED if red else ui.ORANGE_ICON,
         exc=exc,
-        ctx=ctx,
     )
     raise exc
 
@@ -431,7 +426,6 @@ def show_warning(
     br_code: ButtonRequestType = ButtonRequestType.Warning,
     icon: str = ui.ICON_WRONG,
     icon_color: int = ui.RED,
-    ctx: wire.GenericContext | None = None,
 ) -> Awaitable[None]:
     return _show_modal(
         br_type=br_type,
@@ -443,7 +437,6 @@ def show_warning(
         button_cancel=None,
         icon=icon,
         icon_color=icon_color,
-        ctx=ctx,
     )
 
 
@@ -452,7 +445,6 @@ def show_success(
     content: str,
     subheader: str | None = None,
     button: str = "Continue",
-    ctx: wire.GenericContext | None = None,
 ) -> Awaitable[None]:
     return _show_modal(
         br_type=br_type,
@@ -464,7 +456,6 @@ def show_success(
         button_cancel=None,
         icon=ui.ICON_CONFIRM,
         icon_color=ui.GREEN,
-        ctx=ctx,
     )
 
 

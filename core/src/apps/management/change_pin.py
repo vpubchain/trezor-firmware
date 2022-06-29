@@ -23,28 +23,28 @@ async def change_pin(ctx: wire.Context, msg: ChangePin) -> Success:
         raise wire.NotInitialized("Device is not initialized")
 
     # confirm that user wants to change the pin
-    await require_confirm_change_pin(ctx, msg)
+    await require_confirm_change_pin(msg)
 
     # get old pin
-    curpin, salt = await request_pin_and_sd_salt(ctx, "Enter old PIN")
+    curpin, salt = await request_pin_and_sd_salt("Enter old PIN")
 
     # if changing pin, pre-check the entered pin before getting new pin
     if curpin and not msg.remove:
         if not config.check_pin(curpin, salt):
-            await error_pin_invalid(ctx)
+            await error_pin_invalid()
 
     # get new pin
     if not msg.remove:
-        newpin = await request_pin_confirm(ctx)
+        newpin = await request_pin_confirm()
     else:
         newpin = ""
 
     # write into storage
     if not config.change_pin(curpin, newpin, salt, salt):
         if newpin:
-            await error_pin_matches_wipe_code(ctx)
+            await error_pin_matches_wipe_code()
         else:
-            await error_pin_invalid(ctx)
+            await error_pin_invalid()
 
     if newpin:
         if curpin:
@@ -61,7 +61,7 @@ async def change_pin(ctx: wire.Context, msg: ChangePin) -> Success:
     return Success(message=msg_wire)
 
 
-def require_confirm_change_pin(ctx: wire.Context, msg: ChangePin) -> Awaitable[None]:
+def require_confirm_change_pin(msg: ChangePin) -> Awaitable[None]:
     has_pin = config.has_pin()
 
     if msg.remove and has_pin:  # removing pin

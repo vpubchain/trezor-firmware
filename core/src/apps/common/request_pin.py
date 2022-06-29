@@ -14,7 +14,6 @@ def can_lock_device() -> bool:
 
 
 async def request_pin(
-    ctx: wire.GenericContext,
     prompt: str = "Enter your PIN",
     attempts_remaining: int | None = None,
     allow_cancel: bool = True,
@@ -24,10 +23,10 @@ async def request_pin(
     return await request_pin_on_device(prompt, attempts_remaining, allow_cancel)
 
 
-async def request_pin_confirm(ctx: wire.Context, *args: Any, **kwargs: Any) -> str:
+async def request_pin_confirm(*args: Any, **kwargs: Any) -> str:
     while True:
-        pin1 = await request_pin(ctx, "Enter new PIN", *args, **kwargs)
-        pin2 = await request_pin(ctx, "Re-enter new PIN", *args, **kwargs)
+        pin1 = await request_pin("Enter new PIN", *args, **kwargs)
+        pin2 = await request_pin("Re-enter new PIN", *args, **kwargs)
         if pin1 == pin2:
             return pin1
         await pin_mismatch()
@@ -43,15 +42,15 @@ async def pin_mismatch() -> None:
 
 
 async def request_pin_and_sd_salt(
-    ctx: wire.Context, prompt: str = "Enter your PIN", allow_cancel: bool = True
+    prompt: str = "Enter your PIN", allow_cancel: bool = True
 ) -> tuple[str, bytearray | None]:
     if config.has_pin():
-        pin = await request_pin(ctx, prompt, config.get_pin_rem(), allow_cancel)
+        pin = await request_pin(prompt, config.get_pin_rem(), allow_cancel)
         config.ensure_not_wipe_code(pin)
     else:
         pin = ""
 
-    salt = await request_sd_salt(ctx)
+    salt = await request_sd_salt()
 
     return pin, salt
 
@@ -70,7 +69,6 @@ def _get_last_unlock_time() -> int:
 
 
 async def verify_user_pin(
-    ctx: wire.GenericContext = wire.DUMMY_CONTEXT,
     prompt: str = "Enter your PIN",
     allow_cancel: bool = True,
     retry: bool = True,
@@ -94,7 +92,7 @@ async def verify_user_pin(
         pin = ""
 
     try:
-        salt = await request_sd_salt(ctx)
+        salt = await request_sd_salt()
     except SdCardUnavailable:
         raise wire.PinCancelled("SD salt is unavailable")
     if config.unlock(pin, salt):
@@ -114,7 +112,7 @@ async def verify_user_pin(
     raise wire.PinInvalid
 
 
-async def error_pin_invalid(ctx: wire.Context) -> NoReturn:
+async def error_pin_invalid() -> NoReturn:
     from trezor.ui.layouts import show_error_and_raise
 
     await show_error_and_raise(
@@ -127,7 +125,7 @@ async def error_pin_invalid(ctx: wire.Context) -> NoReturn:
     assert False
 
 
-async def error_pin_matches_wipe_code(ctx: wire.Context) -> NoReturn:
+async def error_pin_matches_wipe_code() -> NoReturn:
     from trezor.ui.layouts import show_error_and_raise
 
     await show_error_and_raise(

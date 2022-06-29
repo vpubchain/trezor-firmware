@@ -235,7 +235,7 @@ def lock_device_if_unlocked() -> None:
         lock_device()
 
 
-async def unlock_device(ctx: wire.GenericContext = wire.DUMMY_CONTEXT) -> None:
+async def unlock_device() -> None:
     """Ensure the device is in unlocked state.
 
     If the storage is locked, attempt to unlock it. Reset the homescreen and the wire
@@ -245,7 +245,7 @@ async def unlock_device(ctx: wire.GenericContext = wire.DUMMY_CONTEXT) -> None:
 
     if not config.is_unlocked():
         # verify_user_pin will raise if the PIN was invalid
-        await verify_user_pin(ctx)
+        await verify_user_pin()
 
     set_homescreen()
     wire.find_handler = workflow_handlers.find_registered_handler
@@ -268,7 +268,7 @@ def get_pinlocked_handler(
         return orig_handler
 
     async def wrapper(ctx: wire.Context, msg: wire.Msg) -> protobuf.MessageType:
-        await unlock_device(ctx)
+        await unlock_device()
         return await orig_handler(ctx, msg)
 
     return wrapper

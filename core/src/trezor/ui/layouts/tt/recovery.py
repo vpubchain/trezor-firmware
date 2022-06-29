@@ -19,7 +19,8 @@ from ...components.tt.word_select import WordSelector
 from ..common import button_request, interact
 
 
-async def request_word_count(ctx: wire.GenericContext, dry_run: bool) -> int:
+async def request_word_count(dry_run: bool) -> int:
+    ctx = wire.get_context()
     await button_request(ctx, "word_count", code=ButtonRequestType.MnemonicWordCount)
 
     if dry_run:
@@ -35,9 +36,7 @@ async def request_word_count(ctx: wire.GenericContext, dry_run: bool) -> int:
     return int(count)
 
 
-async def request_word(
-    ctx: wire.GenericContext, word_index: int, word_count: int, is_slip39: bool
-) -> str:
+async def request_word(word_index: int, word_count: int, is_slip39: bool) -> str:
     if is_slip39:
         keyboard: Slip39Keyboard | Bip39Keyboard = Slip39Keyboard(
             f"Type word {word_index + 1} of {word_count}:"
@@ -45,6 +44,7 @@ async def request_word(
     else:
         keyboard = Bip39Keyboard(f"Type word {word_index + 1} of {word_count}:")
 
+    ctx = wire.get_context()
     word: str = await ctx.wait(keyboard)
     return word
 
@@ -103,12 +103,12 @@ async def show_group_share_success(share_index: int, group_index: int) -> None:
 
 
 async def continue_recovery(
-    ctx: wire.GenericContext,
     button_label: str,
     text: str,
     subtext: str | None,
     info_func: Callable | None,
 ) -> bool:
+    ctx = wire.get_context()
     homepage = RecoveryHomescreen(text, subtext)
     if info_func is not None:
         content = InfoConfirm(
@@ -125,6 +125,5 @@ async def continue_recovery(
                 Confirm(homepage, confirm=button_label, major_confirm=True),
                 "recovery",
                 ButtonRequestType.RecoveryHomepage,
-                ctx=ctx,
             )
         )

@@ -36,9 +36,8 @@ async def interact(
     layout: LayoutType,
     br_type: str,
     br_code: ButtonRequestType = ButtonRequestType.Other,
-    ctx: wire.GenericContext | None = None,
 ) -> Any:
-    ctx = ctx or wire.get_context()
+    ctx = wire.get_context()
     if layout.__class__.__name__ == "Paginated":
         from ..components.tt.scroll import Paginated
 

@@ -1,4 +1,4 @@
-from trezor import ui, wire
+from trezor import ui
 from trezor.enums import ButtonRequestType
 
 from ...components.common.confirm import is_confirmed
@@ -18,13 +18,9 @@ async def confirm_webauthn(
     else:
         confirm = Confirm(ConfirmContent(info))
 
-    ctx = wire.get_context()
-    if ctx is None:
-        return is_confirmed(await confirm)
-    else:
-        return is_confirmed(
-            await interact(confirm, "confirm_webauthn", ButtonRequestType.Other)
-        )
+    return is_confirmed(
+        await interact(confirm, "confirm_webauthn", ButtonRequestType.Other)
+    )
 
 
 async def confirm_webauthn_reset() -> bool:
