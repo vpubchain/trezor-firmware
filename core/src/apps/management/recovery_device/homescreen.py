@@ -22,8 +22,7 @@ async def recovery_homescreen() -> None:
         workflow.set_default(homescreen)
         return
 
-    # recovery process does not communicate on the wire
-    await wire.with_context(wire.DUMMY_CONTEXT, recovery_process())
+    await recovery_process()
 
 
 async def recovery_process() -> Success:
