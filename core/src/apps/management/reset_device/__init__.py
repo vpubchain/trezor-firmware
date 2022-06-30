@@ -41,7 +41,7 @@ async def reset_device(ctx: wire.Context, msg: ResetDevice) -> Success:
 
     # request and set new PIN
     if msg.pin_protection:
-        newpin = await request_pin_confirm(ctx)
+        newpin = await request_pin_confirm()
         if not config.change_pin("", newpin, None, None):
             raise wire.ProcessError("Failed to set PIN")
 
