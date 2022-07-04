@@ -77,6 +77,7 @@ impl<T: AsRef<str>> Loader<T> {
 
         // The animation is starting, request an animation frame event.
         ctx.request_anim_frame();
+        ctx.request_paint();
 
         // We don't have to wait for the animation frame event with the first paint,
         // let's do that now.
@@ -171,6 +172,7 @@ impl<T: AsRef<str>> Component for Loader<T> {
                 } else {
                     // There is further progress in the animation, request an animation frame event.
                     ctx.request_anim_frame();
+                    ctx.request_paint();
                 }
             }
         }
