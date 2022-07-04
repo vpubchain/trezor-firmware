@@ -84,8 +84,7 @@ where
     }
 
     fn update_situation(&mut self) {
-        // So that only relevant buttons are visible
-        self.pad.clear();
+
 
         // MIDDLE section above buttons
         // Performing the appropriate `paint_XXX()` for the main choice
@@ -176,7 +175,6 @@ where
         // self.buttons.set_middle(new_middle_btn);
 
         self.buttons.paint();
-        self.buttons.inner_mut().paint();
 
         match button_event {
             Some(ButtonControllerMsg::Triggered(pos)) => match pos {
@@ -184,6 +182,8 @@ where
                     if self.has_previous_choice() {
                         // Clicked BACK. Decrease the page counter.
                         self.decrease_page_counter();
+                        // So that only relevant buttons are visible
+                        self.pad.clear();
                         self.paint();
                     } else {
                         // Triggered LEFTmost button. Send event
@@ -194,6 +194,8 @@ where
                     if self.has_next_choice() {
                         // Clicked NEXT. Increase the page counter.
                         self.increase_page_counter();
+                        // So that only relevant buttons are visible
+                        self.pad.clear();
                         self.paint();
                     } else {
                         // Triggered RIGHTmost button. Send event
