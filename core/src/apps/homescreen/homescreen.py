@@ -4,7 +4,7 @@ from micropython import const
 import storage
 import storage.cache
 import storage.device
-from trezor import config, ui, utils
+from trezor import config, ui, utils, log
 from trezor.ui.loader import Loader, LoaderNeutral
 
 from apps.base import lock_device
@@ -68,6 +68,10 @@ class Homescreen(HomescreenBase):
         ui.display.text_center(
             ui.WIDTH // 2, label_heights[utils.MODEL], self.label, ui.BOLD, ui.FG, ui.BG
         )
+
+        #log.debug(__name__, "USB data connected: %s", utils.usb_data_connected)
+        log.debug(__name__, "utils dict: %s", dir(utils))
+        log.debug(__name__, "utils has usb_data_connected: %s", "usb_data_connected" in dir(utils))
 
     def on_touch_start(self, _x: int, _y: int) -> None:
         if self.loader.start_ms is not None:
