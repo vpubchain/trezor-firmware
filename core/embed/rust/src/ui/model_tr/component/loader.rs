@@ -80,7 +80,7 @@ impl<T: AsRef<str>> Loader<T> {
 
         // We don't have to wait for the animation frame event with the first paint,
         // let's do that now.
-        ctx.request_paint();
+        // ctx.request_paint();
     }
 
     pub fn start_shrinking(&mut self, ctx: &mut EventCtx, now: Instant) {
@@ -160,7 +160,7 @@ impl<T: AsRef<str>> Component for Loader<T> {
         if let Event::Timer(EventCtx::ANIM_FRAME_TIMER) = event {
             if self.is_animating() {
                 // We have something to paint, so request to be painted in the next pass.
-                ctx.request_paint();
+                // ctx.request_paint();
 
                 if self.is_completely_grown(now) {
                     self.state = State::Grown;

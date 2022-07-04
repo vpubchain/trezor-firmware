@@ -1,9 +1,15 @@
-use crate::ui::{
-    component::{Component, Event, EventCtx, Pad},
-    geometry::Rect,
+use crate::{
+    time::Duration,
+    ui::{
+        component::{Child, Component, Event, EventCtx, Pad},
+        geometry::Rect,
+    },
 };
 
-use super::{common::ChoiceItem, theme, ButtonController, ButtonControllerMsg, ButtonPos};
+use super::{
+    common::ChoiceItem, theme, ButtonController, ButtonControllerMsg, ButtonPos, HoldToConfirm,
+    LoaderStyle, LoaderStyleSheet,
+};
 use heapless::Vec;
 
 pub enum ChoicePageMsg {
@@ -27,7 +33,8 @@ const MIDDLE_ROW: i32 = 72;
 pub struct ChoicePage<T, const N: usize> {
     choices: Vec<T, N>,
     pad: Pad,
-    buttons: ButtonController<&'static str>,
+    buttons: Child<ButtonController<&'static str>>,
+    htc: Child<HoldToConfirm<&'static str>>,
     page_counter: u8,
 }
 
@@ -41,7 +48,19 @@ where
             pad: Pad::with_background(theme::BG),
             // The button texts are just placeholders,
             // each `ChoiceItem` is responsible for setting those.
-            buttons: ButtonController::new(Some("BACK"), Some("SELECT"), Some("NEXT")),
+            buttons: Child::new(ButtonController::new(None, Some("SELECT"), Some("NEXT"))),
+            htc: Child::new(HoldToConfirm::new(
+                ButtonPos::Left,
+                "text",
+                LoaderStyleSheet {
+                    normal: &LoaderStyle {
+                        font: theme::FONT_BOLD,
+                        fg_color: theme::FG,
+                        bg_color: theme::BG,
+                    },
+                },
+                Duration::from_millis(1000),
+            )),
             page_counter: 0,
         }
     }
@@ -127,14 +146,38 @@ where
         let button_height = theme::FONT_BOLD.line_height() + 2;
         let (_content_area, button_area) = bounds.split_bottom(button_height);
         self.pad.place(bounds);
+        self.htc.place(button_area);
         self.buttons.place(button_area);
         bounds
     }
 
     fn event(&mut self, ctx: &mut EventCtx, event: Event) -> Option<Self::Msg> {
         let button_event = self.buttons.event(ctx, event);
+        let htc_event = self.htc.event(ctx, event);
+
         // Updating the visual state of the buttons after each event
+        // All three buttons are handled based upon the current choice.
+        // If defined in the current choice, setting their text,
+        // whether they are long-pressed, and painting them.
+        let new_left_btn = self.current_choice().btn_left();
+        // self.buttons.set_left(new_left_btn);
+        // self.buttons.mutate(ctx, |ctx, buttons| {
+        //     buttons.set_left(ctx, new_left_btn);
+        // });
+        let new_right_btn = self.current_choice().btn_right();
+        self.buttons.mutate(ctx, |ctx, buttons| {
+            buttons.set_right(ctx, new_right_btn);
+        });
+        // self.buttons.set_right(new_right_btn);
+        let new_middle_btn = self.current_choice().btn_middle();
+        self.buttons.mutate(ctx, |ctx, buttons| {
+            buttons.set_middle(ctx, new_middle_btn);
+        });
+        // self.buttons.set_middle(new_middle_btn);
+
         self.buttons.paint();
+        self.buttons.inner_mut().paint();
+
         match button_event {
             Some(ButtonControllerMsg::Triggered(pos)) => match pos {
                 ButtonPos::Left => {
@@ -142,10 +185,9 @@ where
                         // Clicked BACK. Decrease the page counter.
                         self.decrease_page_counter();
                         self.paint();
-                        None
                     } else {
                         // Triggered LEFTmost button. Send event
-                        Some(ChoicePageMsg::LeftMost)
+                        return Some(ChoicePageMsg::LeftMost);
                     }
                 }
                 ButtonPos::Right => {
@@ -153,35 +195,39 @@ where
                         // Clicked NEXT. Increase the page counter.
                         self.increase_page_counter();
                         self.paint();
-                        None
                     } else {
                         // Triggered RIGHTmost button. Send event
-                        Some(ChoicePageMsg::RightMost)
+                        return Some(ChoicePageMsg::RightMost);
                     }
                 }
                 ButtonPos::Middle => {
                     // Clicked SELECT. Send current choice index
-                    Some(ChoicePageMsg::Choice(self.page_counter))
+                    return Some(ChoicePageMsg::Choice(self.page_counter));
                 }
             },
-            _ => None,
-        }
+            _ => {}
+        };
+        self.paint();
+        self.buttons.paint();
+        self.buttons.inner_mut().paint();
+        None
     }
 
     fn paint(&mut self) {
         self.pad.paint();
 
-        // All three buttons are handled based upon the current choice.
-        // If defined in the current choice, setting their text,
-        // whether they are long-pressed, and painting them.
-        let new_left_btn = self.current_choice().btn_left();
-        self.buttons.set_left(new_left_btn);
-        let new_right_btn = self.current_choice().btn_right();
-        self.buttons.set_right(new_right_btn);
-        let new_middle_btn = self.current_choice().btn_middle();
-        self.buttons.set_middle(new_middle_btn);
+        // // All three buttons are handled based upon the current choice.
+        // // If defined in the current choice, setting their text,
+        // // whether they are long-pressed, and painting them.
+        // let new_left_btn = self.current_choice().btn_left();
+        // self.buttons.set_left(new_left_btn);
+        // let new_right_btn = self.current_choice().btn_right();
+        // self.buttons.set_right(new_right_btn);
+        // let new_middle_btn = self.current_choice().btn_middle();
+        // self.buttons.set_middle(new_middle_btn);
 
-        self.buttons.paint();
+        self.htc.inner_mut().paint();
+        self.buttons.inner_mut().paint();
 
         // MIDDLE panel
         self.update_situation();
