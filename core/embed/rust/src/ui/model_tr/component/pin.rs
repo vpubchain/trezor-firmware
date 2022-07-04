@@ -14,6 +14,7 @@ use super::{
     ChoicePage, ChoicePageMsg,
 };
 use heapless::{String, Vec};
+use crate::time::Duration;
 
 pub enum PinEntryMsg {
     Confirmed,
@@ -73,6 +74,7 @@ impl PinEntry {
             .map(|digit| {
                 MultilineStringChoiceItem::new(
                     String::from(*digit),
+                    1,
                     Some(ButtonDetails::new("<")),
                     Some(ButtonDetails::new("SELECT")),
                     Some(ButtonDetails::new(">")),
@@ -81,10 +83,12 @@ impl PinEntry {
             })
             .collect();
         let last_index = choices.len() - 1;
-        choices[0].btn_left = Some(ButtonDetails::new("BIN"));
+        choices[0].btn_left = Some(ButtonDetails::new("BIN").with_duration(Duration::from_millis(1000)));
         choices[0].btn_middle = Some(ButtonDetails::new("CONFIRM"));
         choices[0].text = String::from(prompt.as_ref());
+        choices[0].btn_layout_version = 0;
         choices[last_index].btn_right = None;
+        choices[last_index].btn_layout_version = 2;
 
         choices
     }
@@ -173,7 +177,8 @@ impl Component for PinEntry {
                         self.append_new_digit(ctx, page_counter);
                         let new_page_counter =
                             random::uniform_between(1, (CHOICE_LENGTH - 1) as u32);
-                        self.choice_page.set_page_counter(new_page_counter as u8);
+                        self.choice_page.set_page_counter(ctx, new_page_counter as u8, );
+                        ctx.request_paint();
                     }
                 }
             },
@@ -182,13 +187,12 @@ impl Component for PinEntry {
                     return Some(PinEntryMsg::Cancelled);
                 } else {
                     self.delete_last_digit(ctx);
+                    ctx.request_paint();
                 }
             }
             _ => {}
         }
 
-        // Need to paint to refresh the screen
-        self.paint();
         None
     }
 

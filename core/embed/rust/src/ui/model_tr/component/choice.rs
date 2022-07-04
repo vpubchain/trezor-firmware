@@ -11,6 +11,7 @@ use super::{
     LoaderStyle, LoaderStyleSheet,
 };
 use heapless::Vec;
+use crate::ui::component::ComponentExt;
 
 pub enum ChoicePageMsg {
     Choice(u8),
@@ -34,7 +35,6 @@ pub struct ChoicePage<T, const N: usize> {
     choices: Vec<T, N>,
     pad: Pad,
     buttons: Child<ButtonController<&'static str>>,
-    htc: Child<HoldToConfirm<&'static str>>,
     page_counter: u8,
 }
 
@@ -43,26 +43,21 @@ where
     T: ChoiceItem,
 {
     pub fn new(choices: Vec<T, N>) -> Self {
-        Self {
+
+        let initial_left = choices.get(0).unwrap().btn_left();
+        let initial_right = choices.get(0).unwrap().btn_right();
+        let initial_middle = choices.get(0).unwrap().btn_middle();
+
+        let instance = Self {
             choices,
             pad: Pad::with_background(theme::BG),
             // The button texts are just placeholders,
             // each `ChoiceItem` is responsible for setting those.
-            buttons: Child::new(ButtonController::new(None, Some("SELECT"), Some("NEXT"))),
-            htc: Child::new(HoldToConfirm::new(
-                ButtonPos::Left,
-                "text",
-                LoaderStyleSheet {
-                    normal: &LoaderStyle {
-                        font: theme::FONT_BOLD,
-                        fg_color: theme::FG,
-                        bg_color: theme::BG,
-                    },
-                },
-                Duration::from_millis(1000),
-            )),
+            buttons: Child::new(ButtonController::new(initial_left, initial_middle, initial_right)),
             page_counter: 0,
-        }
+        };
+
+        instance
     }
 
     /// Resetting the component, which enables reusing the same instance
@@ -72,20 +67,26 @@ where
     /// always create a new instance with fresh setup, but I could not manage to
     /// properly clean up the previous instance - it would still be shown on
     /// screen and colliding with the new one.
-    pub fn reset(&mut self, new_choices: Vec<T, N>, reset_page_counter: bool) {
+    pub fn reset(&mut self, ctx: &mut EventCtx, new_choices: Vec<T, N>, reset_page_counter: bool) {
         self.choices = new_choices;
         if reset_page_counter {
-            self.set_page_counter(0);
+            self.page_counter = 0;
+            self.update_buttons(ctx, None);
+            self.buttons.request_complete_repaint(ctx);
+            self.pad.clear();
         }
     }
 
-    pub fn set_page_counter(&mut self, page_counter: u8) {
+    pub fn set_page_counter(&mut self, ctx: &mut EventCtx, page_counter: u8) {
+        ctx.request_paint();
+        let prev = self.current_choice().btn_layout();
         self.page_counter = page_counter;
+        self.update_buttons(ctx, Some(prev));
+        self.buttons.request_complete_repaint(ctx);
+        self.pad.clear();
     }
 
     fn update_situation(&mut self) {
-
-
         // MIDDLE section above buttons
         // Performing the appropriate `paint_XXX()` for the main choice
         // and two adjacent choices when present
@@ -133,6 +134,29 @@ where
     fn increase_page_counter(&mut self) {
         self.page_counter += 1;
     }
+
+
+    fn update_buttons(&mut self, ctx: &mut EventCtx, prev: Option<u8>) {
+        // Updating the visual state of the buttons after each event
+        // All three buttons are handled based upon the current choice.
+        // If defined in the current choice, setting their text,
+        // whether they are long-pressed, and painting them.
+
+        if prev.is_none() || prev.unwrap() != self.current_choice().btn_layout() {
+            let new_left_btn = self.current_choice().btn_left();
+            self.buttons.mutate(ctx, |ctx, buttons| {
+                buttons.set_left(ctx, new_left_btn);
+            });
+            let new_right_btn = self.current_choice().btn_right();
+            self.buttons.mutate(ctx, |ctx, buttons| {
+                buttons.set_right(ctx, new_right_btn);
+            });
+            let new_middle_btn = self.current_choice().btn_middle();
+            self.buttons.mutate(ctx, |ctx, buttons| {
+                buttons.set_middle(ctx, new_middle_btn);
+            });
+        }
+    }
 }
 
 impl<T, const N: usize> Component for ChoicePage<T, N>
@@ -144,74 +168,62 @@ where
     fn place(&mut self, bounds: Rect) -> Rect {
         let button_height = theme::FONT_BOLD.line_height() + 2;
         let (_content_area, button_area) = bounds.split_bottom(button_height);
-        self.pad.place(bounds);
-        self.htc.place(button_area);
+        self.pad.place(_content_area);
         self.buttons.place(button_area);
         bounds
     }
 
     fn event(&mut self, ctx: &mut EventCtx, event: Event) -> Option<Self::Msg> {
         let button_event = self.buttons.event(ctx, event);
-        let htc_event = self.htc.event(ctx, event);
 
-        // Updating the visual state of the buttons after each event
-        // All three buttons are handled based upon the current choice.
-        // If defined in the current choice, setting their text,
-        // whether they are long-pressed, and painting them.
-        let new_left_btn = self.current_choice().btn_left();
-        // self.buttons.set_left(new_left_btn);
-        // self.buttons.mutate(ctx, |ctx, buttons| {
-        //     buttons.set_left(ctx, new_left_btn);
-        // });
-        let new_right_btn = self.current_choice().btn_right();
-        self.buttons.mutate(ctx, |ctx, buttons| {
-            buttons.set_right(ctx, new_right_btn);
-        });
-        // self.buttons.set_right(new_right_btn);
-        let new_middle_btn = self.current_choice().btn_middle();
-        self.buttons.mutate(ctx, |ctx, buttons| {
-            buttons.set_middle(ctx, new_middle_btn);
-        });
         // self.buttons.set_middle(new_middle_btn);
 
-        self.buttons.paint();
+        //self.buttons.paint();
 
         match button_event {
             Some(ButtonControllerMsg::Triggered(pos)) => match pos {
                 ButtonPos::Left => {
                     if self.has_previous_choice() {
                         // Clicked BACK. Decrease the page counter.
+                        let prev = self.current_choice().btn_layout();
                         self.decrease_page_counter();
-                        // So that only relevant buttons are visible
                         self.pad.clear();
-                        self.paint();
+                        self.update_buttons(ctx, Some(prev));
+                        ctx.request_paint();
                     } else {
+                        self.pad.clear();
+                        ctx.request_paint();
                         // Triggered LEFTmost button. Send event
                         return Some(ChoicePageMsg::LeftMost);
                     }
                 }
                 ButtonPos::Right => {
                     if self.has_next_choice() {
+                        let prev = self.current_choice().btn_layout();
                         // Clicked NEXT. Increase the page counter.
                         self.increase_page_counter();
-                        // So that only relevant buttons are visible
                         self.pad.clear();
-                        self.paint();
+                        self.update_buttons(ctx, Some(prev));
+                        ctx.request_paint();
                     } else {
+                        self.pad.clear();
+                        ctx.request_paint();
                         // Triggered RIGHTmost button. Send event
                         return Some(ChoicePageMsg::RightMost);
                     }
                 }
                 ButtonPos::Middle => {
                     // Clicked SELECT. Send current choice index
+                    self.pad.clear();
+                    ctx.request_paint();
                     return Some(ChoicePageMsg::Choice(self.page_counter));
                 }
             },
             _ => {}
         };
-        self.paint();
-        self.buttons.paint();
-        self.buttons.inner_mut().paint();
+        // self.paint();
+        // self.buttons.paint();
+        // self.buttons.inner_mut().paint();
         None
     }
 
@@ -228,8 +240,7 @@ where
         // let new_middle_btn = self.current_choice().btn_middle();
         // self.buttons.set_middle(new_middle_btn);
 
-        self.htc.inner_mut().paint();
-        self.buttons.inner_mut().paint();
+        self.buttons.paint();
 
         // MIDDLE panel
         self.update_situation();

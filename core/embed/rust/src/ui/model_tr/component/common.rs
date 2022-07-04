@@ -49,9 +49,10 @@ pub trait ChoiceItem {
     fn paint_center(&mut self);
     fn paint_left(&mut self);
     fn paint_right(&mut self);
-    fn btn_left(&mut self) -> Option<ButtonDetails<&'static str>>;
-    fn btn_middle(&mut self) -> Option<ButtonDetails<&'static str>>;
-    fn btn_right(&mut self) -> Option<ButtonDetails<&'static str>>;
+    fn btn_left(&self) -> Option<ButtonDetails<&'static str>>;
+    fn btn_middle(&self) -> Option<ButtonDetails<&'static str>>;
+    fn btn_right(&self) -> Option<ButtonDetails<&'static str>>;
+    fn btn_layout(&self) -> u8;
 }
 
 /// Describing the button in the choice item.
@@ -79,6 +80,7 @@ impl<T: AsRef<str>> ButtonDetails<T> {
 #[derive(Debug, Clone)]
 pub struct StringChoiceItem {
     pub text: String<100>,
+    pub btn_layout_version: u8,
     pub btn_left: Option<ButtonDetails<&'static str>>,
     pub btn_middle: Option<ButtonDetails<&'static str>>,
     pub btn_right: Option<ButtonDetails<&'static str>>,
@@ -87,6 +89,7 @@ pub struct StringChoiceItem {
 impl StringChoiceItem {
     pub fn from_str<T>(
         text: T,
+        btn_layout_version: u8,
         btn_left: Option<ButtonDetails<&'static str>>,
         btn_middle: Option<ButtonDetails<&'static str>>,
         btn_right: Option<ButtonDetails<&'static str>>,
@@ -96,6 +99,7 @@ impl StringChoiceItem {
     {
         Self {
             text: String::from(text.as_ref()),
+            btn_layout_version,
             btn_left,
             btn_middle,
             btn_right,
@@ -104,12 +108,14 @@ impl StringChoiceItem {
 
     pub fn from_char(
         ch: char,
+        btn_layout_version: u8,
         btn_left: Option<ButtonDetails<&'static str>>,
         btn_middle: Option<ButtonDetails<&'static str>>,
         btn_right: Option<ButtonDetails<&'static str>>,
     ) -> Self {
         Self {
             text: util::char_to_string(ch),
+            btn_layout_version,
             btn_left,
             btn_middle,
             btn_right,
@@ -136,16 +142,20 @@ impl ChoiceItem for StringChoiceItem {
         display_bold_right(Point::new(RIGHT_COL, MIDDLE_ROW), self.text.as_str());
     }
 
-    fn btn_left(&mut self) -> Option<ButtonDetails<&'static str>> {
+    fn btn_left(&self) -> Option<ButtonDetails<&'static str>> {
         self.btn_left
     }
 
-    fn btn_middle(&mut self) -> Option<ButtonDetails<&'static str>> {
+    fn btn_middle(&self) -> Option<ButtonDetails<&'static str>> {
         self.btn_middle
     }
 
-    fn btn_right(&mut self) -> Option<ButtonDetails<&'static str>> {
+    fn btn_right(&self) -> Option<ButtonDetails<&'static str>> {
         self.btn_right
+    }
+
+    fn btn_layout(&self) -> u8 {
+        self.btn_layout_version
     }
 }
 
@@ -157,6 +167,7 @@ pub struct MultilineStringChoiceItem {
     // Arbitrary chosen. TODO: agree on this
     pub text: String<100>,
     delimiter: char,
+    pub btn_layout_version: u8,
     pub btn_left: Option<ButtonDetails<&'static str>>,
     pub btn_middle: Option<ButtonDetails<&'static str>>,
     pub btn_right: Option<ButtonDetails<&'static str>>,
@@ -165,12 +176,14 @@ pub struct MultilineStringChoiceItem {
 impl MultilineStringChoiceItem {
     pub fn new(
         text: String<100>,
+        btn_layout_version: u8,
         btn_left: Option<ButtonDetails<&'static str>>,
         btn_middle: Option<ButtonDetails<&'static str>>,
         btn_right: Option<ButtonDetails<&'static str>>,
     ) -> Self {
         Self {
             text,
+            btn_layout_version,
             delimiter: '\n',
             btn_left,
             btn_middle,
@@ -209,15 +222,19 @@ impl ChoiceItem for MultilineStringChoiceItem {
         }
     }
 
-    fn btn_left(&mut self) -> Option<ButtonDetails<&'static str>> {
+    fn btn_left(&self) -> Option<ButtonDetails<&'static str>> {
         self.btn_left
     }
 
-    fn btn_middle(&mut self) -> Option<ButtonDetails<&'static str>> {
+    fn btn_middle(&self) -> Option<ButtonDetails<&'static str>> {
         self.btn_middle
     }
 
-    fn btn_right(&mut self) -> Option<ButtonDetails<&'static str>> {
+    fn btn_right(&self) -> Option<ButtonDetails<&'static str>> {
         self.btn_right
+    }
+
+    fn btn_layout(&self) -> u8 {
+        self.btn_layout_version
     }
 }

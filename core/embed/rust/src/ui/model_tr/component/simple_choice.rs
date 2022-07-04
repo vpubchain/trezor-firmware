@@ -32,6 +32,7 @@ where
             .map(|digit| {
                 StringChoiceItem::from_str(
                     digit.as_ref(),
+                    1,
                     Some(ButtonDetails::new("BACK")),
                     Some(ButtonDetails::new("SELECT")),
                     Some(ButtonDetails::new("NEXT")),
@@ -41,7 +42,9 @@ where
         // Not wanting anything as leftmost and rightmost button
         let last_index = choices.len() - 1;
         choices[0].btn_left = None;
+        choices[0].btn_layout_version = 0;
         choices[last_index].btn_right = None;
+        choices[last_index].btn_layout_version = 2;
 
         Self {
             choices: str_choices,

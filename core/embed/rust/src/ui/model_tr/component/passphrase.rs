@@ -154,6 +154,7 @@ impl PassphraseEntry {
             .map(|menu_item| {
                 MultilineStringChoiceItem::new(
                     String::from(*menu_item),
+                    1,
                     Some(ButtonDetails::new("BACK")),
                     Some(ButtonDetails::new("SELECT")),
                     Some(ButtonDetails::new("NEXT")),
@@ -163,21 +164,23 @@ impl PassphraseEntry {
         // Including accept button on the left and cancel on the very right
         let last_index = choices.len() - 1;
         choices[0].btn_left = Some(ButtonDetails::new("ACC").with_duration(HOLD_DURATION));
+        choices[0].btn_layout_version = 0;
         choices[last_index].btn_right =
             Some(ButtonDetails::new("CNC").with_duration(HOLD_DURATION));
+        choices[last_index].btn_layout_version = 2;
 
         choices
     }
 
     /// Displaying the MENU
-    fn show_menu_page(&mut self) {
+    fn show_menu_page(&mut self, ctx: &mut EventCtx) {
         let menu_choices = Self::get_menu_choices();
 
-        self.choice_page.reset(menu_choices, true);
+        self.choice_page.reset(ctx, menu_choices, true);
     }
 
     /// Displaying the character category
-    fn show_category_page(&mut self) {
+    fn show_category_page(&mut self, ctx: &mut EventCtx) {
         let new_characters: Vec<&char, 30> = match self.current_category {
             ChoiceCategory::LowercaseLetter => LOWERCASE_LETTERS.iter().collect(),
             ChoiceCategory::UppercaseLetter => UPPERCASE_LETTERS.iter().collect(),
@@ -191,6 +194,7 @@ impl PassphraseEntry {
             .map(|ch| {
                 MultilineStringChoiceItem::new(
                     util::char_to_string(**ch),
+                    1,
                     Some(ButtonDetails::new("BACK")),
                     Some(ButtonDetails::new("SELECT")),
                     Some(ButtonDetails::new("NEXT")),
@@ -201,9 +205,11 @@ impl PassphraseEntry {
         // Putting that option on both sides.
         let last_index = choices.len() - 1;
         choices[0].btn_left = Some(ButtonDetails::new("MENU"));
+        choices[0].btn_layout_version = 0;
         choices[last_index].btn_right = Some(ButtonDetails::new("MENU"));
+        choices[last_index].btn_layout_version = 2;
 
-        self.choice_page.reset(choices, true);
+        self.choice_page.reset(ctx,choices, true);
     }
 
     pub fn passphrase(&self) -> &str {
@@ -240,7 +246,7 @@ impl Component for PassphraseEntry {
                     }
                     _ => {
                         self.current_category = self.get_category_from_menu(page_counter);
-                        self.show_category_page();
+                        self.show_category_page(ctx);
                     }
                 },
                 Some(ChoicePageMsg::LeftMost) => return Some(PassphraseEntryMsg::Confirmed),
@@ -258,7 +264,7 @@ impl Component for PassphraseEntry {
                 }
                 Some(ChoicePageMsg::LeftMost) | Some(ChoicePageMsg::RightMost) => {
                     self.current_category = ChoiceCategory::Menu;
-                    self.show_menu_page();
+                    self.show_menu_page(ctx);
                 }
                 _ => {}
             }

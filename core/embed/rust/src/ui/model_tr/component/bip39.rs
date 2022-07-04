@@ -60,6 +60,7 @@ impl Bip39Entry {
             .map(|ch| {
                 StringChoiceItem::from_char(
                     *ch,
+                    1,
                     Some(ButtonDetails::new("BACK")),
                     Some(ButtonDetails::new("SELECT")),
                     Some(ButtonDetails::new("NEXT")),
@@ -68,7 +69,9 @@ impl Bip39Entry {
             .collect();
         let last_index = choices.len() - 1;
         choices[0].btn_left = Some(ButtonDetails::new("BIN"));
+        choices[0].btn_layout_version = 0;
         choices[last_index].btn_right = None;
+        choices[last_index].btn_layout_version = 2;
 
         choices
     }
@@ -82,6 +85,7 @@ impl Bip39Entry {
             .map(|word| {
                 StringChoiceItem::from_str(
                     word,
+                    1,
                     Some(ButtonDetails::new("BACK")),
                     Some(ButtonDetails::new("SELECT")),
                     Some(ButtonDetails::new("NEXT")),
@@ -90,7 +94,9 @@ impl Bip39Entry {
             .collect();
         let last_index = choices.len() - 1;
         choices[0].btn_left = Some(ButtonDetails::new("BIN"));
+        choices[0].btn_layout_version = 0;
         choices[last_index].btn_right = None;
+        choices[last_index].btn_layout_version = 2;
 
         choices
     }
@@ -161,7 +167,7 @@ impl Component for Bip39Entry {
                     let new_letter = self.letter_choices[page_counter as usize];
                     self.append_letter(ctx, new_letter);
                     let new_choices = self.get_current_choices();
-                    self.choice_page.reset(new_choices, true);
+                    self.choice_page.reset(ctx, new_choices, true);
                 }
             }
             Some(ChoicePageMsg::LeftMost) => {
@@ -169,7 +175,7 @@ impl Component for Bip39Entry {
                 self.delete_last_letter(ctx);
                 self.reset_wordlist();
                 let new_choices = self.get_current_choices();
-                self.choice_page.reset(new_choices, true);
+                self.choice_page.reset(ctx, new_choices, true);
             }
             _ => {}
         }

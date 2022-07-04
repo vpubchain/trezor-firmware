@@ -114,17 +114,9 @@ impl<T: AsRef<str>> Button<T> {
         }
     }
 
-    pub fn set_pressed(&mut self, is_pressed: bool) {
-        if is_pressed {
-            self.state = State::Pressed;
-        } else {
-            self.state = State::Released;
-        }
-    }
-
-    pub fn paint_pressed(&mut self, is_pressed: bool) {
-        self.set_pressed(is_pressed);
-        self.paint();
+    pub fn set_pressed(&mut self, ctx: &mut EventCtx, is_pressed: bool) {
+        let new_state = if is_pressed { State::Pressed } else { State::Released };
+        self.set(ctx, new_state);
     }
 
     fn placement(
